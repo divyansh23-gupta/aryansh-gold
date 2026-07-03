@@ -1,0 +1,78 @@
+import { Link } from "@tanstack/react-router";
+import { Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+
+const columns = [
+  {
+    title: "Shop",
+    links: ["Necklaces", "Earrings", "Rings", "Bracelets"],
+  },
+  {
+    title: "Collections",
+    links: ["Bridal", "Jewellery Sets", "Trending", "New Arrivals"],
+  },
+  {
+    title: "About",
+    links: ["Our Story", "Craftsmanship", "Sustainability", "Careers"],
+  },
+  {
+    title: "Policies",
+    links: ["Shipping", "Returns", "Privacy", "Terms"],
+  },
+];
+
+export function Footer() {
+  return (
+    <footer className="bg-foreground text-background">
+      <div className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-20">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)]">
+          <div className="max-w-xs">
+            <Link to="/" className="font-serif text-2xl">
+              Aryansh <span className="text-primary">Gold</span>
+            </Link>
+            <p className="mt-4 text-sm leading-relaxed text-background/60">
+              Luxury Redefined. Timeless artificial jewellery crafted for the
+              modern woman.
+            </p>
+            <div className="mt-6 flex gap-4">
+              {[Instagram, Facebook, Twitter, Youtube].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  aria-label="Social link"
+                  className="text-background/70 transition-colors hover:text-primary"
+                >
+                  <Icon size={18} strokeWidth={1.5} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {columns.map((col) => (
+            <div key={col.title}>
+              <h4 className="eyebrow text-primary">{col.title}</h4>
+              <ul className="mt-5 space-y-3">
+                {col.links.map((l) => (
+                  <li key={l}>
+                    <a
+                      href="#"
+                      className="text-sm text-background/70 transition-colors hover:text-background"
+                    >
+                      {l}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-background/15 pt-8 text-center sm:flex-row sm:text-left">
+          <p className="text-xs text-background/50">
+            © {new Date().getFullYear()} Aryansh Gold. All rights reserved.
+          </p>
+          <p className="eyebrow text-background/50">Contact · hello@aryanshgold.com</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
