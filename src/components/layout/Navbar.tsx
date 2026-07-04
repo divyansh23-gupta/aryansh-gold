@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Search, User, Heart, ShoppingBag, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navLinks } from "@/data/collections";
+import logoHorizontal from "@/assets/aryansh-logo-horizontal.png.asset.json";
+import logoMark from "@/assets/aryansh-logo-mark.png.asset.json";
 
 const ANNOUNCEMENT_H = 38;
 
