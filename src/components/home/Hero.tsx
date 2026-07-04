@@ -69,22 +69,36 @@ export function Hero() {
               i === index && "animate-kenburns",
             )}
           />
-          <div className="absolute inset-0 bg-charcoal/45" />
+          <div
+            className="absolute inset-0"
+            style={{ background: "var(--gradient-overlay)" }}
+          />
+          <div className="absolute inset-0 bg-charcoal/30" />
         </div>
       ))}
 
       {/* Content */}
       <div className="relative z-10 flex h-full items-center justify-center px-6 text-center text-background">
-        <div key={index} className="max-w-3xl">
-          <p className="eyebrow animate-fade-up text-background/80">Aryansh Gold</p>
-          <h1 className="mt-5 animate-fade-up font-serif text-4xl leading-[1.1] sm:text-6xl md:text-7xl" style={{ animationDelay: "0.1s" }}>
+        <div key={index} className="max-w-4xl">
+          <div className="flex animate-fade-up items-center justify-center gap-3">
+            <span className="gold-rule" aria-hidden />
+            <p className="eyebrow text-primary-foreground/90">Aryansh Gold</p>
+            <span className="gold-rule" aria-hidden />
+          </div>
+          <h1
+            className="display-serif mt-7 animate-fade-up text-5xl text-background sm:text-7xl md:text-8xl"
+            style={{ animationDelay: "0.1s" }}
+          >
             {slides[index].title}
           </h1>
-          <p className="mx-auto mt-6 max-w-xl animate-fade-up text-sm text-background/85 sm:text-base" style={{ animationDelay: "0.2s" }}>
+          <p
+            className="mx-auto mt-7 max-w-lg animate-fade-up text-sm font-light leading-relaxed text-background/90 sm:text-base"
+            style={{ animationDelay: "0.2s" }}
+          >
             {slides[index].subtitle}
           </p>
-          <div className="mt-9 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-            <button className="bg-background px-9 py-4 eyebrow text-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
+          <div className="mt-10 animate-fade-up" style={{ animationDelay: "0.35s" }}>
+            <button className="bg-background px-10 py-4 eyebrow text-foreground transition-colors duration-300 hover:bg-primary hover:text-primary-foreground">
               {slides[index].cta}
             </button>
           </div>

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Search, User, Heart, ShoppingBag, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navLinks } from "@/data/collections";
+import logoHorizontal from "@/assets/aryansh-logo-horizontal.png.asset.json";
+import logoMark from "@/assets/aryansh-logo-mark.png.asset.json";
 
 const ANNOUNCEMENT_H = 38;
 
@@ -41,7 +43,7 @@ export function Navbar() {
       )}
       style={{ top: ANNOUNCEMENT_H }}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 md:px-8 md:py-5">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3.5 md:px-8 md:py-4">
         {/* Left: mobile menu + logo */}
         <div className="flex items-center gap-3">
           <button
@@ -50,15 +52,28 @@ export function Navbar() {
             onClick={() => setOpen(true)}
             className="md:hidden"
           >
-            <Menu size={22} />
+            <Menu size={22} strokeWidth={1.5} />
           </button>
-          <Link to="/" className="font-serif text-xl tracking-tight md:text-2xl">
-            Aryansh <span className="text-primary">Gold</span>
+          <Link to="/" aria-label="Aryansh Gold — home" className="flex items-center">
+            <img
+              src={logoHorizontal.url}
+              alt="Aryansh Gold"
+              width={655}
+              height={200}
+              className="hidden h-11 w-auto md:block lg:h-12"
+            />
+            <img
+              src={logoMark.url}
+              alt="Aryansh Gold"
+              width={515}
+              height={610}
+              className="h-9 w-auto md:hidden"
+            />
           </Link>
         </div>
 
         {/* Center: nav */}
-        <ul className="hidden items-center gap-9 md:flex">
+        <ul className="hidden items-center gap-10 md:flex">
           {navLinks.map((l) => (
             <li key={l.to}>
               <Link
@@ -108,11 +123,15 @@ export function Navbar() {
           )}
         >
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <span className="font-serif text-lg">
-              Aryansh <span className="text-primary">Gold</span>
-            </span>
+            <img
+              src={logoHorizontal.url}
+              alt="Aryansh Gold"
+              width={655}
+              height={200}
+              className="h-9 w-auto"
+            />
             <button type="button" aria-label="Close menu" onClick={() => setOpen(false)}>
-              <X size={22} />
+              <X size={22} strokeWidth={1.5} />
             </button>
           </div>
           <ul className="flex flex-col px-5 py-2">

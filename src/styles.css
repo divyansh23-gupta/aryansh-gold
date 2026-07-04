@@ -76,6 +76,10 @@
   --border: oklch(0.9 0.008 80);
   --input: oklch(0.9 0.008 80);
   --ring: oklch(0.742 0.058 74);
+
+  --shadow-card: 0 1px 2px oklch(0.235 0.003 60 / 0.04), 0 18px 40px -24px oklch(0.235 0.003 60 / 0.28);
+  --shadow-card-hover: 0 2px 4px oklch(0.235 0.003 60 / 0.05), 0 40px 70px -34px oklch(0.235 0.003 60 / 0.42);
+  --gradient-overlay: linear-gradient(to top, oklch(0.235 0.003 60 / 0.72) 0%, oklch(0.235 0.003 60 / 0.18) 45%, oklch(0.235 0.003 60 / 0) 78%);
 }
 
 @layer base {
@@ -156,3 +160,28 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Gold hairline divider used under section eyebrows / headings */
+@utility gold-rule {
+  display: inline-block;
+  height: 1px;
+  width: 3rem;
+  background: linear-gradient(to right, transparent, var(--color-primary), transparent);
+}
+
+/* Boutique product / content card shadows */
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+@utility shadow-card-hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Refined letter-spacing for large serif display headings */
+@utility display-serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+

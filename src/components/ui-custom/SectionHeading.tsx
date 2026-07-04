@@ -23,12 +23,28 @@ export function SectionHeading({
         className,
       )}
     >
-      {eyebrow && <p className="eyebrow text-primary">{eyebrow}</p>}
-      <h2 className="mt-4 font-serif text-3xl leading-tight text-foreground sm:text-4xl md:text-[2.75rem]">
+      {eyebrow && (
+        <div
+          className={cn(
+            "flex items-center gap-3",
+            align === "center" ? "justify-center" : "justify-start",
+          )}
+        >
+          <span className="gold-rule" aria-hidden />
+          <p className="eyebrow text-primary">{eyebrow}</p>
+          {align === "center" && <span className="gold-rule" aria-hidden />}
+        </div>
+      )}
+      <h2 className="display-serif mt-5 text-[1.9rem] text-foreground sm:text-4xl md:text-[3rem]">
         {title}
       </h2>
       {description && (
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <p
+          className={cn(
+            "mt-5 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base",
+            align === "center" && "mx-auto",
+          )}
+        >
           {description}
         </p>
       )}

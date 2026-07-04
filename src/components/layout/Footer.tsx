@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+import logoHorizontal from "@/assets/aryansh-logo-horizontal.png.asset.json";
 
 const columns = [
   {
@@ -26,12 +27,18 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-20">
         <div className="grid gap-12 md:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div className="max-w-xs">
-            <Link to="/" className="font-serif text-2xl">
-              Aryansh <span className="text-primary">Gold</span>
+            <Link to="/" aria-label="Aryansh Gold — home" className="inline-block">
+              <img
+                src={logoHorizontal.url}
+                alt="Aryansh Gold"
+                width={655}
+                height={200}
+                className="h-12 w-auto"
+              />
             </Link>
-            <p className="mt-4 text-sm leading-relaxed text-background/60">
-              Luxury Redefined. Timeless artificial jewellery crafted for the
-              modern woman.
+            <p className="mt-6 text-sm leading-relaxed text-background/60">
+              Affordable luxury artificial jewellery for the modern woman.
+              Timeless designs, boutique finish, and effortless elegance.
             </p>
             <div className="mt-6 flex gap-4">
               {[Instagram, Facebook, Twitter, Youtube].map((Icon, i) => (
