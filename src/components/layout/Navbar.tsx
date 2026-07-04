@@ -123,11 +123,15 @@ export function Navbar() {
           )}
         >
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <span className="font-serif text-lg">
-              Aryansh <span className="text-primary">Gold</span>
-            </span>
+            <img
+              src={logoHorizontal.url}
+              alt="Aryansh Gold"
+              width={655}
+              height={200}
+              className="h-9 w-auto"
+            />
             <button type="button" aria-label="Close menu" onClick={() => setOpen(false)}>
-              <X size={22} />
+              <X size={22} strokeWidth={1.5} />
             </button>
           </div>
           <ul className="flex flex-col px-5 py-2">
