@@ -94,6 +94,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Aryansh Gold — Luxury Redefined" },
+      { name: "description", content: "Aryansh Gold — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
+      { property: "og:description", content: "Aryansh Gold — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
+      { name: "twitter:description", content: "Aryansh Gold — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f4cc9de9-e7fd-431f-bd81-5a1785f4868f/id-preview-134b182f--b63900f7-e261-47ec-881f-e1abba1c58bf.lovable.app-1783108053748.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f4cc9de9-e7fd-431f-bd81-5a1785f4868f/id-preview-134b182f--b63900f7-e261-47ec-881f-e1abba1c58bf.lovable.app-1783108053748.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
