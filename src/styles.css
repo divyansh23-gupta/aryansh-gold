@@ -160,3 +160,28 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Gold hairline divider used under section eyebrows / headings */
+@utility gold-rule {
+  display: inline-block;
+  height: 1px;
+  width: 3rem;
+  background: linear-gradient(to right, transparent, var(--color-primary), transparent);
+}
+
+/* Boutique product / content card shadows */
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+@utility shadow-card-hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Refined letter-spacing for large serif display headings */
+@utility display-serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
