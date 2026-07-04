@@ -17,57 +17,57 @@ const perks = [
 
 export function VisitStore() {
   return (
-    <section className="bg-cream py-20 md:py-28">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 md:grid-cols-2 md:px-8 lg:gap-20">
+    <section className="bg-cream py-24 md:py-32">
+      <div className="mx-auto grid max-w-7xl items-center gap-14 px-5 md:grid-cols-2 md:px-8 lg:gap-20">
         <Reveal>
           <SectionHeading
             eyebrow="Visit Us"
             title="Experience Aryansh Gold In Person"
-            description="Step into our flagship showroom for an intimate, unhurried experience. Explore our full collection, try on signature pieces, and let our stylists help you find something truly yours."
+            description="Step into our flagship boutique for an intimate, unhurried experience. Explore the full collection, try on signature pieces, and let our stylists help you find something truly yours."
             align="left"
           />
-          <ul className="mt-10 space-y-5">
+          <ul className="mt-10 space-y-6">
             {info.map((item) => (
               <li key={item.label} className="flex items-start gap-4">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-background text-primary">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-primary/30 bg-background text-primary">
                   <item.icon size={18} strokeWidth={1.5} />
                 </span>
                 <div className="min-w-0">
                   <p className="eyebrow text-muted-foreground">{item.label}</p>
-                  <p className="mt-1 text-sm text-foreground">{item.value}</p>
+                  <p className="mt-1.5 font-serif text-base text-foreground">{item.value}</p>
                 </div>
               </li>
             ))}
           </ul>
           <div className="mt-10 flex flex-wrap gap-4">
-            <button className="bg-foreground px-8 py-3.5 eyebrow text-background transition-colors hover:bg-primary">
+            <button className="bg-foreground px-9 py-4 eyebrow text-background transition-colors duration-300 hover:bg-primary hover:text-primary-foreground">
               Get Directions
             </button>
-            <button className="border border-foreground px-8 py-3.5 eyebrow text-foreground transition-colors hover:bg-foreground hover:text-background">
+            <button className="border border-foreground px-9 py-4 eyebrow text-foreground transition-colors duration-300 hover:bg-foreground hover:text-background">
               Call Now
             </button>
           </div>
         </Reveal>
 
         <Reveal delay={120}>
-          <div className="overflow-hidden">
+          <div className="overflow-hidden rounded-sm shadow-card">
             <img
               src={showroom}
-              alt="Aryansh Gold showroom"
+              alt="Aryansh Gold boutique"
               loading="lazy"
               width={1280}
               height={1280}
-              className="aspect-[4/3] w-full object-cover"
+              className="aspect-[4/3] w-full object-cover transition-transform duration-[900ms] ease-out hover:scale-105"
             />
           </div>
-          <div className="mt-6 grid grid-cols-3 gap-4">
+          <div className="mt-5 grid grid-cols-3 gap-4">
             {perks.map((p) => (
               <div
                 key={p.label}
-                className="flex flex-col items-center gap-2 bg-background px-3 py-5 text-center"
+                className="flex flex-col items-center gap-2.5 rounded-sm border border-border bg-background px-3 py-6 text-center"
               >
-                <p.icon size={20} className="text-primary" strokeWidth={1.5} />
-                <span className="text-[0.7rem] font-medium leading-tight text-foreground">
+                <p.icon size={22} className="text-primary" strokeWidth={1.5} />
+                <span className="text-[0.72rem] font-medium leading-tight text-foreground">
                   {p.label}
                 </span>
               </div>
