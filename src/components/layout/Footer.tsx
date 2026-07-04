@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+import logoHorizontal from "@/assets/aryansh-logo-horizontal.png.asset.json";
 
 const columns = [
   {
