@@ -22,24 +22,30 @@ export function TopStyles() {
           description="Signature pieces, refined for the modern wardrobe."
         />
 
-        <div className="no-scrollbar mt-10 flex flex-wrap justify-center gap-2 overflow-x-auto md:gap-3">
+        <div className="no-scrollbar mt-12 flex flex-wrap justify-center gap-x-7 gap-y-3 overflow-x-auto">
           {topStyleFilters.map((f) => (
             <button
               key={f}
               onClick={() => setActive(f)}
               className={cn(
-                "shrink-0 border px-5 py-2.5 eyebrow transition-colors",
+                "relative shrink-0 pb-2 eyebrow transition-colors duration-300",
                 active === f
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-transparent text-muted-foreground hover:border-foreground hover:text-foreground",
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {f}
+              <span
+                className={cn(
+                  "absolute inset-x-0 -bottom-px mx-auto h-px bg-primary transition-all duration-300",
+                  active === f ? "w-full opacity-100" : "w-0 opacity-0",
+                )}
+              />
             </button>
           ))}
         </div>
 
-        <div className="mt-12 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-14 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 md:gap-x-8 lg:grid-cols-4">
           {filtered.map((p, i) => (
             <Reveal key={p.id} delay={(i % 4) * 90}>
               <ProductCard product={p} />
