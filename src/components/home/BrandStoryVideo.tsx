@@ -3,14 +3,15 @@ import videoPoster from "@/assets/video-poster.jpg";
 
 export function BrandStoryVideo() {
   return (
-    <section className="relative h-[88vh] min-h-[560px] w-full overflow-hidden">
+    <section className="relative h-[88vh] min-h-[560px] w-full overflow-hidden bg-charcoal">
       <img
         src={videoPoster}
         alt="Aryansh Gold craftsmanship"
         loading="lazy"
         width={1920}
         height={1080}
-        className="h-full w-full scale-105 object-cover"
+        className="h-full w-full scale-105 object-cover opacity-0 transition-opacity duration-700 [&.is-loaded]:opacity-100"
+        onLoad={(e) => e.currentTarget.classList.add("is-loaded")}
       />
       <div className="absolute inset-0 bg-charcoal/65" />
       <div
