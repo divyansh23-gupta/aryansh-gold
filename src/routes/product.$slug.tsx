@@ -9,7 +9,7 @@ import {
   Truck,
   Gem,
   Headset,
-  Check,
+
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
