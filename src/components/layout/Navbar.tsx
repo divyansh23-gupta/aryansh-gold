@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Search, User, Heart, ShoppingBag, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navLinks } from "@/data/collections";
+import { useStore } from "@/lib/store";
 import logoHorizontal from "@/assets/aryansh-logo-horizontal.png.asset.json";
 import logoMark from "@/assets/aryansh-logo-mark.png.asset.json";
 
@@ -13,6 +14,7 @@ export function Navbar() {
   const overHero = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { cartCount, wishlist, setCartOpen } = useStore();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -28,12 +30,6 @@ export function Navbar() {
   // Solid navbar unless transparent-over-hero and not yet scrolled.
   const solid = scrolled || !overHero;
 
-  const icons = [
-    { icon: Search, label: "Search" },
-    { icon: User, label: "Account" },
-    { icon: Heart, label: "Wishlist" },
-    { icon: ShoppingBag, label: "Cart" },
-  ];
 
   return (
     <header
