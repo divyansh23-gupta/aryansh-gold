@@ -14,6 +14,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AnnouncementBar } from "../components/layout/AnnouncementBar";
 import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
+import { CartDrawer } from "../components/layout/CartDrawer";
+import { StoreProvider } from "../lib/store";
 
 function NotFoundComponent() {
   return (
