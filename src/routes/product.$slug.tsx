@@ -147,7 +147,7 @@ function ProductPage() {
           {/* Gallery */}
           <div className="flex flex-col-reverse gap-4 md:flex-row">
             <div className="no-scrollbar flex gap-3 overflow-x-auto md:w-20 md:flex-col">
-              {product.gallery.map((img, i) => (
+              {product.gallery.map((img: string, i: number) => (
                 <button
                   key={i}
                   type="button"
