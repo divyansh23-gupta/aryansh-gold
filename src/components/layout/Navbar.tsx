@@ -85,18 +85,48 @@ export function Navbar() {
 
         {/* Right: icons */}
         <div className="flex items-center gap-4 md:gap-5">
-          {icons.map(({ icon: Icon, label }) => (
-            <button
-              key={label}
-              type="button"
-              aria-label={label}
-              className="transition-colors hover:text-primary"
-            >
-              <Icon size={19} strokeWidth={1.5} />
-            </button>
-          ))}
+          <button
+            type="button"
+            aria-label="Search"
+            className="transition-colors hover:text-primary"
+          >
+            <Search size={19} strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            aria-label="Account"
+            className="hidden transition-colors hover:text-primary sm:block"
+          >
+            <User size={19} strokeWidth={1.5} />
+          </button>
+          <Link
+            to="/wishlist"
+            aria-label="Wishlist"
+            className="relative transition-colors hover:text-primary"
+          >
+            <Heart size={19} strokeWidth={1.5} />
+            {wishlist.length > 0 && (
+              <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[0.6rem] font-medium text-primary-foreground">
+                {wishlist.length}
+              </span>
+            )}
+          </Link>
+          <button
+            type="button"
+            aria-label="Cart"
+            onClick={() => setCartOpen(true)}
+            className="relative transition-colors hover:text-primary"
+          >
+            <ShoppingBag size={19} strokeWidth={1.5} />
+            {cartCount > 0 && (
+              <span className="absolute -right-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[0.6rem] font-medium text-primary-foreground">
+                {cartCount}
+              </span>
+            )}
+          </button>
         </div>
       </nav>
+
 
       {/* Mobile drawer */}
       <div
