@@ -143,12 +143,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AnnouncementBar />
-      <Navbar />
-      <main>
-        <Outlet />
-      </main>
-      <Footer />
+      <StoreProvider>
+        <AnnouncementBar />
+        <Navbar />
+        <main>
+          <Outlet />
+        </main>
+        <Footer />
+        <CartDrawer />
+      </StoreProvider>
     </QueryClientProvider>
   );
 }
