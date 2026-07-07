@@ -32,6 +32,16 @@ create table public.admin_invites (
 -- =========================================================================
 -- AUTOMATIC TIMESTAMPS SETUP (RENAMED TRIGGERS)
 -- =========================================================================
+
+-- Define the update timestamp function explicitly to ensure self-contained migrations
+create or replace function public.set_current_timestamp_updated_at()
+returns trigger security definer set search_path = public as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
 create trigger admin_users_set_updated_at before update on public.admin_users for each row execute procedure public.set_current_timestamp_updated_at();
 create trigger admin_invites_set_updated_at before update on public.admin_invites for each row execute procedure public.set_current_timestamp_updated_at();
 
