@@ -264,3 +264,29 @@ create policy "Admins edit collections" on public.collections
   for all 
   using (public.is_admin(auth.uid()))
   with check (public.is_admin(auth.uid()));
+
+-- =========================================================================
+-- ADMINISTRATIVE STORAGE BUCKETS & RLS POLICIES
+-- =========================================================================
+
+-- Create bucket catalog if not exists
+insert into storage.buckets (id, name, public)
+values ('catalog', 'catalog', true)
+on conflict (id) do nothing;
+
+-- Create policies for storage.objects
+drop policy if exists "Allow public access to catalog bucket" on storage.objects;
+create policy "Allow public access to catalog bucket" on storage.objects
+  for select using (bucket_id = 'catalog');
+
+drop policy if exists "Allow authenticated uploads to catalog bucket" on storage.objects;
+create policy "Allow authenticated uploads to catalog bucket" on storage.objects
+  for insert with check (bucket_id = 'catalog' and auth.role() = 'authenticated');
+
+drop policy if exists "Allow authenticated updates to catalog bucket" on storage.objects;
+create policy "Allow authenticated updates to catalog bucket" on storage.objects
+  for update using (bucket_id = 'catalog' and auth.role() = 'authenticated');
+
+drop policy if exists "Allow authenticated deletes to catalog bucket" on storage.objects;
+create policy "Allow authenticated deletes to catalog bucket" on storage.objects
+  for delete using (bucket_id = 'catalog' and auth.role() = 'authenticated');
