@@ -86,6 +86,56 @@ grant execute on function public.is_admin(uuid) to authenticated, anon;
 grant execute on function public.is_super_admin(uuid) to authenticated, anon;
 
 -- =========================================================================
+-- ADMINISTRATIVE HARDENING PROTECTION TRIGGERS (MILESTONE 5 PATCh)
+-- =========================================================================
+
+-- Prevents deletion/demotion of last super_admin or the bootstrap email record
+create or replace function public.protect_super_admin_roles()
+returns trigger security definer set search_path = public as $$
+declare
+  super_admin_count integer;
+  target_email text;
+begin
+  -- Fetch targeted email from auth.users using Security Definer privileges
+  select email into target_email 
+  from auth.users 
+  where id = old.user_id;
+
+  -- 1. Prevent demotion or deletion of the bootstrap email
+  if target_email = 'divyanshgupta231@gmail.com' then
+    if (tg_op = 'DELETE') or (tg_op = 'UPDATE' and new.role != 'super_admin'::public.admin_role) then
+      raise exception 'Operation Prohibited: The predefined bootstrap super_admin account cannot be demoted or deleted.';
+    end if;
+  end if;
+
+  -- 2. Prevent removing the last super admin from admin_users
+  if (tg_op = 'DELETE' and old.role = 'super_admin'::public.admin_role) or 
+     (tg_op = 'UPDATE' and old.role = 'super_admin'::public.admin_role and new.role != 'super_admin'::public.admin_role) then
+    
+    select count(*) into super_admin_count 
+    from public.admin_users 
+    where role = 'super_admin'::public.admin_role;
+
+    if super_admin_count <= 1 then
+      raise exception 'Operation Prohibited: Cannot delete or demote the last remaining super_admin. At least one super_admin must exist.';
+    end if;
+  end if;
+
+  if tg_op = 'DELETE' then
+    return old;
+  else
+    return new;
+  end if;
+end;
+$$ language plpgsql;
+
+-- Bind safety checks trigger to public.admin_users
+drop trigger if exists enforce_super_admin_protection on public.admin_users;
+create trigger enforce_super_admin_protection
+  before delete or update on public.admin_users
+  for each row execute procedure public.protect_super_admin_roles();
+
+-- =========================================================================
 -- BOOTSTRAPPING & INVITATION SYSTEM ON SIGN-UP
 -- =========================================================================
 
