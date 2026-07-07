@@ -215,3 +215,52 @@ alter table public.product_variants
   drop constraint if exists chk_variants_stock_quantity;
 alter table public.product_variants 
   add constraint chk_variants_stock_quantity check (stock_quantity >= 0);
+
+-- =========================================================================
+-- ADMINISTRATIVE CATALOG MANAGEMENT RLS POLICIES
+-- =========================================================================
+
+-- Enable RLS on target tables (keeps tables locked for write/read overrides)
+alter table public.products enable row level security;
+alter table public.product_variants enable row level security;
+alter table public.product_images enable row level security;
+alter table public.product_collections enable row level security;
+alter table public.categories enable row level security;
+alter table public.collections enable row level security;
+
+-- Drop and recreate custom admin write policies (keeps public read policies unaffected)
+drop policy if exists "Admins edit products" on public.products;
+create policy "Admins edit products" on public.products
+  for all 
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));
+
+drop policy if exists "Admins edit variants" on public.product_variants;
+create policy "Admins edit variants" on public.product_variants
+  for all 
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));
+
+drop policy if exists "Admins edit product images" on public.product_images;
+create policy "Admins edit product images" on public.product_images
+  for all 
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));
+
+drop policy if exists "Admins edit product collections" on public.product_collections;
+create policy "Admins edit product collections" on public.product_collections
+  for all 
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));
+
+drop policy if exists "Admins edit categories" on public.categories;
+create policy "Admins edit categories" on public.categories
+  for all 
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));
+
+drop policy if exists "Admins edit collections" on public.collections;
+create policy "Admins edit collections" on public.collections
+  for all 
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));

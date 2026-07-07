@@ -6,7 +6,7 @@ import { ShoppingBag, Plus, Edit, Trash2, Search, ArrowRight, Eye } from "lucide
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/products")({
+export const Route = createFileRoute("/admin/products/")({
   component: AdminProductsList,
 });
 
@@ -173,7 +173,7 @@ function AdminProductsList() {
                             disabled={isDeleting === p.id}
                             onClick={() => {
                               if (confirm(`Are you sure you want to delete ${p.name}? This will remove all related SKUs and gallery items.`)) {
-                                handleDelete(p.id);
+                                  handleDelete(p.id);
                               }
                             }}
                             className="p-1.5 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-40"
