@@ -8,6 +8,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import type { AdminRole } from "@/lib/database.types";
 
 export interface Profile {
   id: string;
@@ -22,6 +23,9 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
+  adminRole: AdminRole | null;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ user: User | null; error: any }>;
   login: (email: string, password: string) => Promise<{ user: User | null; error: any }>;
   loginWithGoogle: () => Promise<{ error: any }>;
@@ -37,12 +41,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Helper to fetch admin role
+  const fetchAdminRole = async (userId: string): Promise<AdminRole | null> => {
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("role")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) {
+        console.warn("Error fetching admin role:", error);
+        return null;
+      }
+      return data ? (data.role as AdminRole) : null;
+    } catch {
+      return null;
+    }
+  };
 
   // Helper to fetch or create a user profile record in the database
   const getOrCreateProfile = async (sessionUser: User): Promise<Profile | null> => {
     try {
-      // 1. Attempt to fetch existing profile
       const { data: existingProfile, error: fetchError } = await supabase
         .from("profiles")
         .select("*")
@@ -58,7 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return existingProfile as Profile;
       }
 
-      // 2. If profile does not exist, create it (client-side fallback)
       const fullName = sessionUser.user_metadata?.full_name || "Valued Customer";
       const { data: newProfile, error: insertError } = await supabase
         .from("profiles")
@@ -78,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           "Could not auto-create profile row (this is expected if RLS or tables are not fully configured yet):",
           insertError
         );
-        // Return a mock profile so the frontend still functions seamlessly during development
         return {
           id: sessionUser.id,
           full_name: fullName,
@@ -98,7 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Fetch active session and load initial profile
     const initializeAuth = async () => {
       try {
         const { data: { session: activeSession } } = await supabase.auth.getSession();
@@ -110,6 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(activeSession.user);
           const userProfile = await getOrCreateProfile(activeSession.user);
           if (mounted) setProfile(userProfile);
+
+          const role = await fetchAdminRole(activeSession.user.id);
+          if (mounted) setAdminRole(role);
         }
       } catch (err) {
         console.error("Error checking auth session:", err);
@@ -120,7 +142,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
-    // Listen to changes in auth state (login, logout, token refresh, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!mounted) return;
@@ -131,12 +152,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (newSession?.user) {
           setLoading(true);
           const userProfile = await getOrCreateProfile(newSession.user);
+          const role = await fetchAdminRole(newSession.user.id);
           if (mounted) {
             setProfile(userProfile);
+            setAdminRole(role);
             setLoading(false);
           }
         } else {
           setProfile(null);
+          setAdminRole(null);
           setLoading(false);
         }
       }
@@ -236,7 +260,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      // First update the auth metadata in case they update full name
       if (updates.full_name) {
         await supabase.auth.updateUser({
           data: { full_name: updates.full_name }
@@ -262,7 +285,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.warn("Could not update profile in database (expected if tables or RLS not set up):", error);
       
-      // Clientside fallback update so the UI still displays the change
       const fallbackProfile: Profile = {
         ...profile!,
         full_name: updates.full_name ?? profile!.full_name,
@@ -296,6 +318,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     session,
     loading,
+    adminRole,
+    isAdmin: adminRole !== null,
+    isSuperAdmin: adminRole === "super_admin",
     signUp,
     login,
     loginWithGoogle,

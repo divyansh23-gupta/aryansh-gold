@@ -141,17 +141,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+  const isRoutingAdmin = router.state.location.pathname.startsWith("/admin");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <StoreProvider>
-          <AnnouncementBar />
-          <Navbar />
+          {!isRoutingAdmin && <AnnouncementBar />}
+          {!isRoutingAdmin && <Navbar />}
           <main>
             <Outlet />
           </main>
-          <Footer />
+          {!isRoutingAdmin && <Footer />}
           <CartDrawer />
         </StoreProvider>
       </AuthProvider>
