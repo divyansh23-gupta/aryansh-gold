@@ -1,6 +1,30 @@
 import { type Product, type Category } from "@/data/products";
 import { type FeaturedCollection } from "@/data/collections";
 
+export type AdminRole = "super_admin" | "admin";
+export type InviteStatus = "pending" | "accepted" | "expired" | "revoked";
+
+export interface DbAdminUser {
+  user_id: string;
+  role: AdminRole;
+  invited_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbAdminInvite {
+  id: string;
+  email: string;
+  role: AdminRole;
+  token: string;
+  status: InviteStatus;
+  invited_by: string;
+  expires_at: string;
+  accepted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DbCategory {
   id: string;
   name: string;
