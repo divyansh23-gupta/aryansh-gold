@@ -86,18 +86,45 @@ grant execute on function public.is_admin(uuid) to authenticated, anon;
 grant execute on function public.is_super_admin(uuid) to authenticated, anon;
 
 -- =========================================================================
--- BOOTSTRAPPING FOR FIRST SUPER_ADMIN (WITH SEARCH_PATH CONSTRAINTS)
+-- BOOTSTRAPPING & INVITATION SYSTEM ON SIGN-UP
 -- =========================================================================
 
--- Promotes divyanshgupta231@gmail.com on sign-up, standard users default to normal
+-- Promotes bootstrap email or matching pending invites on sign-up automatically
 create or replace function public.handle_user_signup_bootstrap()
 returns trigger security definer set search_path = public as $$
+declare
+  invite_record record;
 begin
+  -- 1. Predefined Bootstrap Super Admin Check
   if new.email = 'divyanshgupta231@gmail.com' then
     insert into public.admin_users (user_id, role)
     values (new.id, 'super_admin'::public.admin_role)
     on conflict (user_id) do nothing;
   end if;
+
+  -- 2. Process Pending Admin Invitations (Case-insensitive email check)
+  select * into invite_record 
+  from public.admin_invites
+  where lower(email) = lower(new.email)
+    and status = 'pending'::public.invite_status 
+    and expires_at > now()
+  order by created_at desc
+  limit 1;
+
+  if invite_record.id is not null then
+    -- Promote the newly registered user
+    insert into public.admin_users (user_id, role, invited_by)
+    values (new.id, invite_record.role, invite_record.invited_by)
+    on conflict (user_id) do nothing;
+
+    -- Update invite status
+    update public.admin_invites
+    set status = 'accepted'::public.invite_status,
+        accepted_at = now(),
+        updated_at = now()
+    where id = invite_record.id;
+  end if;
+
   return new;
 end;
 $$ language plpgsql;
