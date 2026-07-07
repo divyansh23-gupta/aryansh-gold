@@ -290,3 +290,24 @@ create policy "Allow authenticated updates to catalog bucket" on storage.objects
 drop policy if exists "Allow authenticated deletes to catalog bucket" on storage.objects;
 create policy "Allow authenticated deletes to catalog bucket" on storage.objects
   for delete using (bucket_id = 'catalog' and auth.role() = 'authenticated');
+
+-- =========================================================================
+-- SECURITY DEFINER AUDIT HELPER FUNCTIONS
+-- =========================================================================
+create or replace function public.run_audit_query()
+returns json security definer set search_path = public as $$
+declare
+  result json;
+begin
+  select json_agg(t) into result
+  from (
+    select policyname, cmd
+    from pg_policies
+    where schemaname='storage'
+    and tablename='objects'
+  ) t;
+  return result;
+end;
+$$ language plpgsql;
+
+grant execute on function public.run_audit_query() to authenticated, anon;
