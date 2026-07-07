@@ -30,10 +30,10 @@ create table public.admin_invites (
 );
 
 -- =========================================================================
--- AUTOMATIC TIMESTAMPS SETUP
+-- AUTOMATIC TIMESTAMPS SETUP (RENAMED TRIGGERS)
 -- =========================================================================
-create trigger set_updated_at before update on public.admin_users for each row execute procedure public.set_current_timestamp_updated_at();
-create trigger set_updated_at before update on public.admin_invites for each row execute procedure public.set_current_timestamp_updated_at();
+create trigger admin_users_set_updated_at before update on public.admin_users for each row execute procedure public.set_current_timestamp_updated_at();
+create trigger admin_invites_set_updated_at before update on public.admin_invites for each row execute procedure public.set_current_timestamp_updated_at();
 
 -- =========================================================================
 -- PERFORMANCE OPTIMIZATION INDEXES
@@ -68,6 +68,12 @@ begin
   );
 end;
 $$ language plpgsql;
+
+-- =========================================================================
+-- EXPLICIT FUNCTION EXECUTE GRANTS
+-- =========================================================================
+grant execute on function public.is_admin(uuid) to authenticated, anon;
+grant execute on function public.is_super_admin(uuid) to authenticated, anon;
 
 -- =========================================================================
 -- BOOTSTRAPPING FOR FIRST SUPER_ADMIN (WITH SEARCH_PATH CONSTRAINTS)
