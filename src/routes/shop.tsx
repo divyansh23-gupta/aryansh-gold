@@ -5,12 +5,11 @@ import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/ui-custom/ProductCard";
 import { Reveal } from "@/components/ui-custom/Reveal";
 import {
-  products,
-  categories,
   discountPercent,
   type Category,
   type Product,
 } from "@/data/products";
+import { useStore } from "@/lib/store";
 import bannerRings from "@/assets/banner-rings.jpg";
 
 export const Route = createFileRoute("/shop")({
@@ -53,6 +52,7 @@ const priceRanges = [
 const PAGE_SIZE = 8;
 
 function ShopPage() {
+  const { products, categories, catalogLoading } = useStore();
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [priceRange, setPriceRange] = useState("all");
   const [newArrivals, setNewArrivals] = useState(false);
@@ -108,7 +108,7 @@ function ShopPage() {
         sorted.sort((a, b) => discountPercent(b) - discountPercent(a));
     }
     return sorted;
-  }, [selectedCategories, priceRange, newArrivals, bestSellers, inStockOnly, sort]);
+  }, [products, selectedCategories, priceRange, newArrivals, bestSellers, inStockOnly, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, totalPages);
@@ -217,7 +217,19 @@ function ShopPage() {
               <SortSelect value={sort} onChange={(v) => { setSort(v); setPage(1); }} />
             </div>
 
-            {paged.length === 0 ? (
+            {catalogLoading ? (
+              <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 md:gap-x-8">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="animate-pulse space-y-4">
+                    <div className="aspect-[4/5] bg-muted/60 rounded-sm" />
+                    <div className="space-y-2">
+                      <div className="h-4 bg-muted/60 rounded w-2/3" />
+                      <div className="h-3 bg-muted/60 rounded w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : paged.length === 0 ? (
               <div className="py-24 text-center">
                 <p className="font-serif text-xl text-foreground">No pieces found</p>
                 <p className="mt-2 text-sm text-muted-foreground">

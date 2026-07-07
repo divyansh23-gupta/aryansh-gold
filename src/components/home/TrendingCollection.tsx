@@ -2,10 +2,12 @@ import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SectionHeading } from "@/components/ui-custom/SectionHeading";
 import { ProductCard } from "@/components/ui-custom/ProductCard";
-import { trendingProducts } from "@/data/products";
+import { useStore } from "@/lib/store";
 
 export function TrendingCollection() {
   const scroller = useRef<HTMLDivElement | null>(null);
+  const { products } = useStore();
+  const trendingProducts = products.slice(0, 8);
 
   const scroll = (dir: 1 | -1) => {
     const el = scroller.current;

@@ -9,6 +9,7 @@ const FREE_SHIPPING_THRESHOLD = 2999;
 
 export function CartDrawer() {
   const {
+    products,
     cart,
     cartOpen,
     setCartOpen,
@@ -113,7 +114,7 @@ export function CartDrawer() {
 
             <div className="flex-1 overflow-y-auto px-6 py-2">
               {cart.map((line) => {
-                const p = cartLineProduct(line);
+                const p = cartLineProduct(line, products);
                 if (!p) return null;
                 return (
                   <div

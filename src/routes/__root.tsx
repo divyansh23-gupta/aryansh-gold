@@ -16,6 +16,7 @@ import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
 import { CartDrawer } from "../components/layout/CartDrawer";
 import { StoreProvider } from "../lib/store";
+import { AuthProvider } from "../hooks/useAuth";
 
 function NotFoundComponent() {
   return (
@@ -143,15 +144,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <AnnouncementBar />
-        <Navbar />
-        <main>
-          <Outlet />
-        </main>
-        <Footer />
-        <CartDrawer />
-      </StoreProvider>
+      <AuthProvider>
+        <StoreProvider>
+          <AnnouncementBar />
+          <Navbar />
+          <main>
+            <Outlet />
+          </main>
+          <Footer />
+          <CartDrawer />
+        </StoreProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

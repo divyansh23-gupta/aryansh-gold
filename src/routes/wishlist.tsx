@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart, X, ShoppingBag } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { products, formatPrice, discountPercent, type Product } from "@/data/products";
+import { formatPrice, discountPercent, type Product } from "@/data/products";
 import { Reveal } from "@/components/ui-custom/Reveal";
 
 export const Route = createFileRoute("/wishlist")({
@@ -17,14 +17,14 @@ export const Route = createFileRoute("/wishlist")({
 });
 
 function WishlistPage() {
-  const { wishlist, removeFromWishlist, addToCart } = useStore();
+  const { products, wishlist, removeFromWishlist, addToCart } = useStore();
 
   const items = useMemo(
     () =>
       wishlist
         .map((id) => products.find((p) => p.id === id))
         .filter((p): p is Product => Boolean(p)),
-    [wishlist],
+    [wishlist, products],
   );
 
   if (items.length === 0) {

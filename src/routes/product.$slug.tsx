@@ -14,13 +14,13 @@ import {
 import { cn } from "@/lib/utils";
 import {
   getProductBySlug,
-  relatedProducts,
   discountPercent,
   formatPrice,
-  products,
   type Product,
 } from "@/data/products";
 import { useStore } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
+import { mapDbProduct } from "@/lib/database.types";
 import { QuantityStepper } from "@/components/ui-custom/QuantityStepper";
 import { ProductCard } from "@/components/ui-custom/ProductCard";
 import { Reveal } from "@/components/ui-custom/Reveal";
@@ -33,8 +33,20 @@ import {
 } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/product/$slug")({
-  loader: ({ params }) => {
-    const product = getProductBySlug(params.slug);
+  loader: async ({ params }) => {
+    const { data: prodData } = await supabase
+      .from("products")
+      .select("*, categories(name), product_images(image_url), product_variants(*)")
+      .eq("slug", params.slug)
+      .maybeSingle();
+
+    let product: Product | null = null;
+    if (prodData) {
+      product = mapDbProduct(prodData);
+    } else {
+      product = getProductBySlug(params.slug) || null;
+    }
+
     if (!product) throw notFound();
     return { product };
   },
@@ -91,7 +103,7 @@ const trustItems = [
 function ProductPage() {
   const { product } = Route.useLoaderData();
   const navigate = useNavigate();
-  const { addToCart, toggleWishlist, isWished, markViewed, recentlyViewed } = useStore();
+  const { products, addToCart, toggleWishlist, isWished, markViewed, recentlyViewed } = useStore();
 
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -107,7 +119,12 @@ function ProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
-  const related = useMemo(() => relatedProducts(product, 4), [product]);
+  const related = useMemo(() => {
+    return products
+      .filter((p) => p.id !== product.id && p.category === product.category)
+      .concat(products.filter((p) => p.id !== product.id && p.category !== product.category))
+      .slice(0, 4);
+  }, [product, products]);
   const recent = useMemo(
     () =>
       recentlyViewed
@@ -118,8 +135,12 @@ function ProductPage() {
     [recentlyViewed, product.id],
   );
 
+  const selectedVariantId = useMemo(() => {
+    return product.variants?.[0]?.id || product.id;
+  }, [product]);
+
   const handleBuyNow = () => {
-    addToCart(product.id, quantity);
+    addToCart(selectedVariantId, quantity);
     navigate({ to: "/cart" });
   };
 
@@ -246,7 +267,7 @@ function ProductPage() {
               <button
                 type="button"
                 disabled={!product.inStock}
-                onClick={() => addToCart(product.id, quantity)}
+                onClick={() => addToCart(selectedVariantId, quantity)}
                 className="flex flex-1 items-center justify-center gap-2 border border-foreground bg-background py-4 eyebrow text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShoppingBag size={16} strokeWidth={1.5} />

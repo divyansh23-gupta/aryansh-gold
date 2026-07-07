@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Reveal } from "@/components/ui-custom/Reveal";
-import { featuredCollections } from "@/data/collections";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/collections")({
   head: () => ({
@@ -15,13 +15,15 @@ export const Route = createFileRoute("/collections")({
 });
 
 function CollectionsPage() {
+  const { collections } = useStore();
+
   return (
     <div className="pt-28 md:pt-32">
       <div className="mx-auto max-w-7xl px-5 py-14 md:px-8">
         <p className="eyebrow text-primary">Curated Edits</p>
         <h1 className="mt-4 font-serif text-4xl text-foreground sm:text-5xl">Collections</h1>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {featuredCollections.map((c, i) => (
+          {collections.map((c, i) => (
             <Reveal key={c.title} delay={i * 120} as="article">
               <a href="#" className="group block overflow-hidden">
                 <img

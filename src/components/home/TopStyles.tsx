@@ -3,15 +3,17 @@ import { SectionHeading } from "@/components/ui-custom/SectionHeading";
 import { ProductCard } from "@/components/ui-custom/ProductCard";
 import { Reveal } from "@/components/ui-custom/Reveal";
 import { cn } from "@/lib/utils";
-import { products, topStyleFilters, type TopStyleFilter } from "@/data/products";
+import { topStyleFilters, type TopStyleFilter } from "@/data/products";
+import { useStore } from "@/lib/store";
 
 export function TopStyles() {
   const [active, setActive] = useState<TopStyleFilter>("All");
+  const { products } = useStore();
 
   const filtered = useMemo(() => {
     if (active === "All") return products;
     return products.filter((p) => p.category === active);
-  }, [active]);
+  }, [active, products]);
 
   return (
     <section className="bg-cream py-20 md:py-28">

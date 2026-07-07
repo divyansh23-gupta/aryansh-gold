@@ -1,12 +1,14 @@
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/ui-custom/Reveal";
-import { featuredCollections } from "@/data/collections";
+import { useStore } from "@/lib/store";
 
 export function FeaturedCollections() {
+  const { collections } = useStore();
+
   return (
     <section className="mx-auto max-w-7xl px-5 py-20 md:px-8 md:py-28">
       <div className="grid gap-6 md:grid-cols-3">
-        {featuredCollections.map((c, i) => (
+        {collections.map((c, i) => (
           <Reveal key={c.title} delay={i * 120} as="article">
             <a href="#" className="group block">
               <div className="relative overflow-hidden">

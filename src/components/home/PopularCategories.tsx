@@ -1,8 +1,10 @@
 import { Reveal } from "@/components/ui-custom/Reveal";
 import { SectionHeading } from "@/components/ui-custom/SectionHeading";
-import { popularCategories } from "@/data/collections";
+import { useStore } from "@/lib/store";
 
 export function PopularCategories() {
+  const { popularCategories } = useStore();
+
   return (
     <section className="bg-cream py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-5 md:px-8">

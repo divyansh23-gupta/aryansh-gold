@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Twitter, Youtube } from "lucide-react";
-import logoHorizontal from "@/assets/aryansh-logo-horizontal.png.asset.json";
+import logoHorizontal from "@/assets/aryansh-logo-horizontal.png";
 
 const columns = [
   {
@@ -29,7 +29,7 @@ export function Footer() {
           <div className="max-w-xs">
             <Link to="/" aria-label="Aryansh Gold — home" className="inline-block">
               <img
-                src={logoHorizontal.url}
+                src={logoHorizontal}
                 alt="Aryansh Gold"
                 width={655}
                 height={200}

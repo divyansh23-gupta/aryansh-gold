@@ -20,7 +20,7 @@ const FREE_SHIPPING_THRESHOLD = 2999;
 const COUPONS: Record<string, number> = { ARYANSH10: 0.1, LUXE15: 0.15 };
 
 function CartPage() {
-  const { cart, cartSubtotal, setQuantity, removeFromCart } = useStore();
+  const { products, cart, cartSubtotal, setQuantity, removeFromCart } = useStore();
   const [coupon, setCoupon] = useState("");
   const [applied, setApplied] = useState<{ code: string; rate: number } | null>(null);
   const [couponError, setCouponError] = useState("");
@@ -82,7 +82,7 @@ function CartPage() {
             </div>
 
             {cart.map((line) => {
-              const p = cartLineProduct(line);
+              const p = cartLineProduct(line, products);
               if (!p) return null;
               return (
                 <div
