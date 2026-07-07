@@ -15,6 +15,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { type VariantStatus } from "@/lib/database.types";
 
+import { cn } from "@/lib/utils";
+
 export const Route = createFileRoute("/admin/products/$id/edit")({
   component: AdminProductsEdit,
 });
@@ -37,6 +39,9 @@ function AdminProductsEdit() {
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [dbCollections, setDbCollections] = useState<{ id: string; title: string }[]>([]);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
+  const [originalCollectionIds, setOriginalCollectionIds] = useState<string[]>([]);
   
   // General Info States
   const [name, setName] = useState("");
@@ -70,6 +75,22 @@ function AdminProductsEdit() {
         // 1. Categories
         const { data: cats } = await supabase.from("categories").select("id, name").order("name");
         if (cats) setCategories(cats);
+
+        // 1b. Collections
+        const { data: cols } = await supabase.from("collections").select("id, title").order("title");
+        if (cols) setDbCollections(cols);
+
+        // 1c. Assigned Collections
+        const { data: assignedCols } = await supabase
+          .from("product_collections")
+          .select("collection_id")
+          .eq("product_id", id);
+        
+        if (assignedCols) {
+          const colIds = assignedCols.map((c) => c.collection_id);
+          setSelectedCollectionIds(colIds);
+          setOriginalCollectionIds(colIds);
+        }
 
         // 2. Parent Product
         const { data: product, error: prodErr } = await supabase
@@ -236,6 +257,31 @@ function AdminProductsEdit() {
 
       if (prodError) throw prodError;
 
+      // Sync collections: delete removed, insert added
+      const colsToDelete = originalCollectionIds.filter((cid) => !selectedCollectionIds.includes(cid));
+      const colsToInsert = selectedCollectionIds.filter((cid) => !originalCollectionIds.includes(cid));
+
+      if (colsToDelete.length > 0) {
+        const { error: colDelError } = await supabase
+          .from("product_collections")
+          .delete()
+          .eq("product_id", id)
+          .in("collection_id", colsToDelete);
+        if (colDelError) throw colDelError;
+      }
+
+      if (colsToInsert.length > 0) {
+        const { error: colInsError } = await supabase
+          .from("product_collections")
+          .insert(
+            colsToInsert.map((colId) => ({
+              product_id: id,
+              collection_id: colId,
+            }))
+          );
+        if (colInsError) throw colInsError;
+      }
+
       // 2. Synchronize variants: upsert current ones, delete removed ones
       const currentVariantIds = variants.map((v) => v.id).filter(Boolean) as string[];
       const idsToDelete = originalVariantIds.filter((oid) => !currentVariantIds.includes(oid));
@@ -375,6 +421,40 @@ function AdminProductsEdit() {
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Collections</label>
+              {dbCollections.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic mt-2.5">No collections registered</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 pt-0.5">
+                  {dbCollections.map((col) => {
+                    const isChecked = selectedCollectionIds.includes(col.id);
+                    return (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => {
+                          if (isChecked) {
+                            setSelectedCollectionIds((prev) => prev.filter((id) => id !== col.id));
+                          } else {
+                            setSelectedCollectionIds((prev) => [...prev, col.id]);
+                          }
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                          isChecked
+                            ? "bg-primary border-primary text-primary-foreground font-semibold"
+                            : "bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        )}
+                      >
+                        {col.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 

@@ -113,6 +113,15 @@ function AdminProductsList() {
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">
                               {totalVariants} {totalVariants === 1 ? "variant" : "variants"} configured
                             </p>
+                            {p.collections && p.collections.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {p.collections.map((c) => (
+                                  <span key={c.id} className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-sm font-medium">
+                                    {c.title}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>

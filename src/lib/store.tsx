@@ -96,7 +96,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       const { data: prodData, error: prodError } = await supabase
         .from("products")
-        .select("*, categories(name), product_images(image_url), product_variants(*)")
+        .select("*, categories(name), product_images(image_url), product_variants(*), product_collections(collection_id, collections(title))")
         .order("created_at", { ascending: false });
 
       if (prodError || catError || collError) {

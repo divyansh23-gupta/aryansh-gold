@@ -28,6 +28,7 @@ export interface Product {
   description: string;
   materials: string;
   care: string;
+  collections?: { id: string; title: string }[];
 }
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;

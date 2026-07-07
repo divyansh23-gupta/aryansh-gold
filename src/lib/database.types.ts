@@ -177,6 +177,10 @@ export const mapDbProduct = (row: any): Product => {
     description: row.description || "",
     materials: row.materials || "",
     care: row.care || "",
-    variants: mappedVariants
+    variants: mappedVariants,
+    collections: row.product_collections?.map((pc: any) => ({
+      id: pc.collection_id,
+      title: pc.collections?.title || ""
+    })) || [],
   } as any;
 };

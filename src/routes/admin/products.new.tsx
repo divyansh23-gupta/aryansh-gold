@@ -15,6 +15,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { type VariantStatus } from "@/lib/database.types";
 
+import { cn } from "@/lib/utils";
+
 export const Route = createFileRoute("/admin/products/new")({
   component: AdminProductsNew,
 });
@@ -34,6 +36,8 @@ function AdminProductsNew() {
   const { refreshCatalog } = useStore();
   const [submitting, setSubmitting] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [dbCollections, setDbCollections] = useState<{ id: string; title: string }[]>([]);
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
   
   // General Info States
   const [name, setName] = useState("");
@@ -70,16 +74,21 @@ function AdminProductsNew() {
     }
   ]);
 
-  // Load categories from database
+  // Load categories and collections from database
   useEffect(() => {
-    const loadCategories = async () => {
-      const { data } = await supabase.from("categories").select("id, name").order("name");
-      if (data) {
-        setCategories(data);
-        if (data.length > 0) setCategoryId(data[0].id);
+    const loadCategoriesAndCollections = async () => {
+      const { data: cats } = await supabase.from("categories").select("id, name").order("name");
+      if (cats) {
+        setCategories(cats);
+        if (cats.length > 0) setCategoryId(cats[0].id);
+      }
+
+      const { data: cols } = await supabase.from("collections").select("id, title").order("title");
+      if (cols) {
+        setDbCollections(cols);
       }
     };
-    loadCategories();
+    loadCategoriesAndCollections();
   }, []);
 
   // Pre-generate slug and SKU when name changes
@@ -208,6 +217,19 @@ function AdminProductsNew() {
 
       if (prodError) throw prodError;
 
+      // Insert collection mappings
+      if (selectedCollectionIds.length > 0) {
+        const { error: colError } = await supabase
+          .from("product_collections")
+          .insert(
+            selectedCollectionIds.map((colId) => ({
+              product_id: product.id,
+              collection_id: colId,
+            }))
+          );
+        if (colError) throw colError;
+      }
+
       // 2. Insert variants
       const { error: varError } = await supabase
         .from("product_variants")
@@ -315,6 +337,40 @@ function AdminProductsNew() {
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Collections</label>
+              {dbCollections.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic mt-2.5">No collections registered</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 pt-0.5">
+                  {dbCollections.map((col) => {
+                    const isChecked = selectedCollectionIds.includes(col.id);
+                    return (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => {
+                          if (isChecked) {
+                            setSelectedCollectionIds((prev) => prev.filter((id) => id !== col.id));
+                          } else {
+                            setSelectedCollectionIds((prev) => [...prev, col.id]);
+                          }
+                        }}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                          isChecked
+                            ? "bg-primary border-primary text-primary-foreground font-semibold"
+                            : "bg-transparent border-border text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        )}
+                      >
+                        {col.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
