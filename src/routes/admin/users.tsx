@@ -160,7 +160,7 @@ function AdminUsersManagement() {
 
     setSendingInvite(true);
     try {
-      const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+      const token = window.crypto.randomUUID().replace(/-/g, "");
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
 
       const { error } = await supabase
