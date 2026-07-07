@@ -207,3 +207,11 @@ create policy "Super Admins manage all invitations" on public.admin_invites
   for all 
   using (public.is_super_admin(auth.uid()))
   with check (public.is_super_admin(auth.uid()));
+
+-- =========================================================================
+-- MILESTONE 7: INVENTORY MANAGEMENT HARDENING CONSTRAINT
+-- =========================================================================
+alter table public.product_variants 
+  drop constraint if exists chk_variants_stock_quantity;
+alter table public.product_variants 
+  add constraint chk_variants_stock_quantity check (stock_quantity >= 0);
