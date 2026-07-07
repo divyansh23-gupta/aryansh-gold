@@ -36,12 +36,19 @@ create trigger set_updated_at before update on public.admin_users for each row e
 create trigger set_updated_at before update on public.admin_invites for each row execute procedure public.set_current_timestamp_updated_at();
 
 -- =========================================================================
--- HELPER FUNCTIONS FOR SECURITY CHECKS
+-- PERFORMANCE OPTIMIZATION INDEXES
+-- =========================================================================
+create index idx_admin_users_role on public.admin_users(role);
+create index idx_admin_invites_email on public.admin_invites(email);
+create index idx_admin_invites_status on public.admin_invites(status);
+
+-- =========================================================================
+-- HELPER FUNCTIONS FOR SECURITY CHECKS (WITH SEARCH_PATH CONSTRAINTS)
 -- =========================================================================
 
 -- Check if user is any admin
 create or replace function public.is_admin(user_id uuid)
-returns boolean security definer as $$
+returns boolean security definer set search_path = public as $$
 begin
   return exists (
     select 1 from public.admin_users 
@@ -52,7 +59,7 @@ $$ language plpgsql;
 
 -- Check if user is a super_admin
 create or replace function public.is_super_admin(user_id uuid)
-returns boolean security definer as $$
+returns boolean security definer set search_path = public as $$
 begin
   return exists (
     select 1 from public.admin_users 
@@ -63,12 +70,12 @@ end;
 $$ language plpgsql;
 
 -- =========================================================================
--- BOOTSTRAPPING FOR FIRST SUPER_ADMIN
+-- BOOTSTRAPPING FOR FIRST SUPER_ADMIN (WITH SEARCH_PATH CONSTRAINTS)
 -- =========================================================================
 
 -- Promotes divyanshgupta231@gmail.com on sign-up, standard users default to normal
 create or replace function public.handle_user_signup_bootstrap()
-returns trigger security definer as $$
+returns trigger security definer set search_path = public as $$
 begin
   if new.email = 'divyanshgupta231@gmail.com' then
     insert into public.admin_users (user_id, role)
@@ -86,7 +93,7 @@ create trigger on_auth_user_created_bootstrap
   for each row execute procedure public.handle_user_signup_bootstrap();
 
 -- =========================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES (WITH WITH CHECK CLAUSES)
 -- =========================================================================
 
 alter table public.admin_users enable row level security;
@@ -94,11 +101,16 @@ alter table public.admin_invites enable row level security;
 
 -- Policies for admin_users
 create policy "Super Admins manage all admin roles" on public.admin_users
-  for all using (public.is_super_admin(auth.uid()));
+  for all 
+  using (public.is_super_admin(auth.uid()))
+  with check (public.is_super_admin(auth.uid()));
 
 create policy "Admins can view other admin user roles" on public.admin_users
-  for select using (public.is_admin(auth.uid()));
+  for select 
+  using (public.is_admin(auth.uid()));
 
 -- Policies for admin_invites
 create policy "Super Admins manage all invitations" on public.admin_invites
-  for all using (public.is_super_admin(auth.uid()));
+  for all 
+  using (public.is_super_admin(auth.uid()))
+  with check (public.is_super_admin(auth.uid()));
