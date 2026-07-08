@@ -82,14 +82,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Aryansh Gold — Luxury Redefined" },
+      { title: "Aryansh Gold | Luxury Redefined" },
       {
         name: "description",
         content:
-          "Aryansh Gold — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections.",
+          "Aryansh Gold | Luxury Redefined — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections.",
       },
       { name: "author", content: "Aryansh Gold" },
-      { property: "og:title", content: "Aryansh Gold — Luxury Redefined" },
+      { property: "og:title", content: "Aryansh Gold | Luxury Redefined" },
       {
         property: "og:description",
         content:
@@ -97,16 +97,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Aryansh Gold — Luxury Redefined" },
-      { name: "description", content: "Aryansh Gold — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
-      { property: "og:description", content: "Aryansh Gold — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
-      { name: "twitter:description", content: "Aryansh Gold — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f4cc9de9-e7fd-431f-bd81-5a1785f4868f/id-preview-134b182f--b63900f7-e261-47ec-881f-e1abba1c58bf.lovable.app-1783108053748.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f4cc9de9-e7fd-431f-bd81-5a1785f4868f/id-preview-134b182f--b63900f7-e261-47ec-881f-e1abba1c58bf.lovable.app-1783108053748.png" },
+      { name: "twitter:title", content: "Aryansh Gold | Luxury Redefined" },
+      { name: "description", content: "Aryansh Gold | Luxury Redefined — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
+      { property: "og:description", content: "Aryansh Gold | Luxury Redefined — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
+      { name: "twitter:description", content: "Aryansh Gold | Luxury Redefined — luxury artificial jewellery crafted for the modern woman. Timeless necklaces, earrings, rings and bridal collections." },
+      { property: "og:image", content: "/og-image.png" },
+      { name: "twitter:image", content: "/og-image.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",

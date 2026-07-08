@@ -1,12 +1,24 @@
 import { MapPin, Clock, Phone, ShieldCheck, Sparkles, BadgeCheck } from "lucide-react";
 import { Reveal } from "@/components/ui-custom/Reveal";
 import { SectionHeading } from "@/components/ui-custom/SectionHeading";
-import showroom from "@/assets/showroom.jpg";
+import showroomVideo from "@/assets/videos/showroom.mp4";
 
 const info = [
-  { icon: MapPin, label: "Location", value: "12 Marine Drive, Mumbai 400020" },
-  { icon: Clock, label: "Opening Hours", value: "Mon – Sun · 10:00 AM – 9:00 PM" },
-  { icon: Phone, label: "Contact", value: "+91 98765 43210" },
+  { 
+    icon: MapPin, 
+    label: "Location", 
+    value: "Berasia, Bhopal Range Chouraha, Near Shiv Mandir, Main Road, Berasia" 
+  },
+  { 
+    icon: Clock, 
+    label: "Opening Hours", 
+    value: "Mon – Sun · 9:00 AM – 8:00 PM" 
+  },
+  { 
+    icon: Phone, 
+    label: "Contact", 
+    value: "+91 91791 23866" 
+  },
 ];
 
 const perks = [
@@ -23,7 +35,7 @@ export function VisitStore() {
           <SectionHeading
             eyebrow="Visit Us"
             title="Experience Aryansh Gold In Person"
-            description="Step into our flagship boutique for an intimate, unhurried experience. Explore the full collection, try on signature pieces, and let our stylists help you find something truly yours."
+            description="Visit our showroom in Berasia, Bhopal and explore our curated collection of artificial jewellery including bridal sets, necklaces, earrings, rings, bangles, bracelets and fashion accessories. Experience our products in person and receive personalized assistance from our team."
             align="left"
           />
           <ul className="mt-10 space-y-6">
@@ -40,27 +52,36 @@ export function VisitStore() {
             ))}
           </ul>
           <div className="mt-10 flex flex-wrap gap-4">
-            <button className="bg-foreground px-9 py-4 eyebrow text-background transition-colors duration-300 hover:bg-primary hover:text-primary-foreground">
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Aryansh+Gold+Berasia+Bhopal+Range+Chouraha"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-foreground px-9 py-4 eyebrow text-background transition-colors duration-300 hover:bg-primary hover:text-primary-foreground"
+            >
               Get Directions
-            </button>
-            <button className="border border-foreground px-9 py-4 eyebrow text-foreground transition-colors duration-300 hover:bg-foreground hover:text-background">
+            </a>
+            <a
+              href="tel:+919179123866"
+              className="border border-foreground px-9 py-4 eyebrow text-foreground transition-colors duration-300 hover:bg-foreground hover:text-background"
+            >
               Call Now
-            </button>
+            </a>
           </div>
         </Reveal>
 
         <Reveal delay={120}>
-          <div className="overflow-hidden rounded-sm shadow-card">
-            <img
-              src={showroom}
-              alt="Aryansh Gold boutique"
-              loading="lazy"
-              width={1280}
-              height={1280}
-              className="aspect-[4/3] w-full object-cover transition-transform duration-[900ms] ease-out hover:scale-105"
+          <div className="overflow-hidden rounded-sm shadow-card max-w-sm mx-auto w-full">
+            <video
+              src={showroomVideo}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="aspect-[9/16] w-full object-cover transition-transform duration-[900ms] ease-out hover:scale-105"
             />
           </div>
-          <div className="mt-5 grid grid-cols-3 gap-4">
+          <div className="mt-5 grid grid-cols-3 gap-4 max-w-sm mx-auto w-full">
             {perks.map((p) => (
               <div
                 key={p.label}
