@@ -184,3 +184,47 @@ export const mapDbProduct = (row: any): Product => {
     })) || [],
   } as any;
 };
+
+export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+
+export interface DbOrder {
+  id: string;
+  user_id: string | null;
+  order_number: string;
+  status: OrderStatus;
+  subtotal: number;
+  shipping_cost: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  shipping_address: any; // Stored as JSONB
+  billing_address: any; // Stored as JSONB
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbOrderItem {
+  id: string;
+  order_id: string;
+  product_id: string | null;
+  variant_id: string | null;
+  product_name_snapshot: string;
+  sku_snapshot: string;
+  unit_price: number;
+  quantity: number;
+  total_price: number;
+}
+
+export interface DbOrderStatusHistory {
+  id: string;
+  order_id: string;
+  status: OrderStatus;
+  notes: string | null;
+  changed_by: string | null;
+  created_at: string;
+}
+
