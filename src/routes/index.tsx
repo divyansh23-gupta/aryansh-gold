@@ -21,13 +21,13 @@ function Index() {
     <>
       <Hero />
       <FeaturedCollections />
+      <TrendingLooks />
+      <VisitStore />
       <PopularCategories />
       <TrendingCollection />
       <TopStyles />
-      <TrendingLooks />
       <BrandStoryVideo />
       <FeaturedBanners />
-      <VisitStore />
       <WhyUs />
       <Testimonials />
       <Newsletter />

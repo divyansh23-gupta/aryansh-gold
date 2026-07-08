@@ -1,50 +1,59 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { mapDbProduct } from "@/lib/database.types";
 import { type DbReel } from "@/lib/database.types";
-import { type Product } from "@/data/products";
 import { SectionHeading } from "@/components/ui-custom/SectionHeading";
 import { Reveal } from "@/components/ui-custom/Reveal";
-import { Link } from "@tanstack/react-router";
 import { 
   Play, 
-  X, 
   ChevronLeft, 
   ChevronRight, 
-  Film, 
-  ArrowRight,
-  Sparkles,
-  ShoppingBag
+  Instagram, 
+  ExternalLink,
+  Film
 } from "lucide-react";
-import showroomVideo from "@/assets/videos/showroom.mp4";
 
 const MOCK_REELS: DbReel[] = [
   {
     id: "mock-reel-1",
-    title: "Aryansh Luxury Jewels Reel",
-    video_url: showroomVideo,
+    title: "Signature Bridal Styling",
+    instagram_url: "https://www.instagram.com/reel/DaMY5vasd_9/",
     thumbnail_url: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop",
-    product_id: null,
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
   {
     id: "mock-reel-2",
-    title: "Traditional Heritage Gold Jhumkas",
-    video_url: showroomVideo,
+    title: "Heritage Gold Jhumkas Curation",
+    instagram_url: "https://www.instagram.com/reel/DaMY5vasd_9/",
     thumbnail_url: "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=600&auto=format&fit=crop",
-    product_id: null,
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
   {
     id: "mock-reel-3",
-    title: "Royal Antique Bangles Set",
-    video_url: showroomVideo,
+    title: "Traditional Bridal Bangles Setup",
+    instagram_url: "https://www.instagram.com/reel/DaMY5vasd_9/",
     thumbnail_url: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&auto=format&fit=crop",
-    product_id: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "mock-reel-4",
+    title: "Elegant Kundan Choker Presentation",
+    instagram_url: "https://www.instagram.com/reel/DaMY5vasd_9/",
+    thumbnail_url: "https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=600&auto=format&fit=crop",
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "mock-reel-5",
+    title: "Aesthetic Antique Styling",
+    instagram_url: "https://www.instagram.com/reel/DaMY5vasd_9/",
+    thumbnail_url: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&auto=format&fit=crop",
     is_active: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -54,7 +63,6 @@ const MOCK_REELS: DbReel[] = [
 export function TrendingLooks() {
   const [reels, setReels] = useState<DbReel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedReel, setSelectedReel] = useState<DbReel | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -63,15 +71,7 @@ export function TrendingLooks() {
         setLoading(true);
         const { data, error } = await supabase
           .from("reels")
-          .select(`
-            *,
-            products:product_id(
-              *,
-              categories:category_id(*),
-              product_variants(*),
-              product_images(*)
-            )
-          `)
+          .select("*")
           .eq("is_active", true)
           .order("created_at", { ascending: false });
 
@@ -91,7 +91,7 @@ export function TrendingLooks() {
   const scroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
-      const scrollAmount = 340; // width of card + gap
+      const scrollAmount = 300; // width of card + gaps
       container.scrollBy({
         left: direction === "left" ? -scrollAmount : scrollAmount,
         behavior: "smooth"
@@ -101,16 +101,16 @@ export function TrendingLooks() {
 
   if (loading) {
     return (
-      <section className="bg-cream py-20 md:py-28">
+      <section className="bg-cream pt-16 pb-0 md:pt-24 md:pb-0">
         <div className="mx-auto max-w-7xl px-5 md:px-8 text-center">
           <SectionHeading
             eyebrow="Trending Looks"
-            title="Style In Motion"
-            description="Explore our jewellery styled in real life. Discover your next favorite piece."
+            title="Styled by Aryansh Gold"
+            description="Discover how our collections come alive through styling, celebrations, and everyday elegance."
           />
-          <div className="mt-14 flex gap-6 justify-center overflow-hidden">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="w-[280px] aspect-[9/16] rounded-sm bg-muted/40 animate-pulse shrink-0" />
+          <div className="mt-12 flex gap-6 justify-center overflow-hidden">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="w-[230px] aspect-[9/16] rounded-sm bg-muted/40 animate-pulse shrink-0" />
             ))}
           </div>
         </div>
@@ -122,219 +122,91 @@ export function TrendingLooks() {
     return null; 
   }
 
-  const mappedProduct = (reel: DbReel): Product | null => {
-    if (!reel.products) return null;
-    try {
-      return mapDbProduct(reel.products);
-    } catch (e) {
-      console.warn("Could not map product for reel:", e);
-      return null;
-    }
-  };
-
   return (
-    <section className="bg-cream py-20 md:py-28 overflow-hidden">
+    <section className="bg-cream pt-16 pb-0 md:pt-24 md:pb-0 overflow-hidden">
       <div className="mx-auto max-w-7xl px-5 md:px-8 relative">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-primary/10 pb-6">
           <SectionHeading
-            eyebrow="Trending Looks"
-            title="Aryansh Reels & Styles"
-            description="See our exquisite collections in action, styled to perfection."
+            eyebrow="Styled by Aryansh Gold"
+            title="Trending Looks"
+            description="Discover how our collections come alive through styling, celebrations, and everyday elegance."
             align="left"
           />
           
-          {/* Carousel navigation controls */}
-          <div className="flex gap-3">
+          {/* Controls */}
+          <div className="flex gap-3 shrink-0">
             <button
               onClick={() => scroll("left")}
-              className="grid h-12 w-12 place-items-center rounded-full border border-primary/30 bg-background text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none"
-              aria-label="Previous looks"
+              className="grid h-10 w-10 place-items-center rounded-full border border-primary/20 bg-background text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none shadow-sm"
+              aria-label="Scroll left"
             >
-              <ChevronLeft size={20} strokeWidth={1.5} />
+              <ChevronLeft size={16} strokeWidth={1.5} />
             </button>
             <button
               onClick={() => scroll("right")}
-              className="grid h-12 w-12 place-items-center rounded-full border border-primary/30 bg-background text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none"
-              aria-label="Next looks"
+              className="grid h-10 w-10 place-items-center rounded-full border border-primary/20 bg-background text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none shadow-sm"
+              aria-label="Scroll right"
             >
-              <ChevronRight size={20} strokeWidth={1.5} />
+              <ChevronRight size={16} strokeWidth={1.5} />
             </button>
           </div>
         </div>
 
-        {/* Carousel container */}
+        {/* Carousel Grid */}
         <div
           ref={scrollContainerRef}
-          className="no-scrollbar mt-12 flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4"
+          className="no-scrollbar mt-10 flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4"
         >
-          {reels.map((reel, i) => {
-            const product = mappedProduct(reel);
-            const coverImage = reel.thumbnail_url || product?.image || "/src/assets/video-poster.jpg";
-
-            return (
-              <Reveal
-                key={reel.id}
-                delay={i * 80}
-                className="snap-start shrink-0 w-[280px]"
+          {reels.map((reel, i) => (
+            <Reveal
+              key={reel.id}
+              delay={i * 70}
+              className="snap-start shrink-0 w-[78vw] sm:w-[42vw] md:w-[28vw] lg:w-[220px] xl:w-[236px]"
+            >
+              <a
+                href={reel.instagram_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block relative cursor-pointer overflow-hidden rounded-sm bg-background shadow-card border border-border/40 hover:shadow-card-hover hover:border-primary/30 transition-all duration-500"
               >
-                <div
-                  onClick={() => setSelectedReel(reel)}
-                  className="group relative cursor-pointer overflow-hidden rounded-sm bg-background shadow-card border border-border/40"
-                >
-                  {/* Thumbnail / Cover */}
-                  <div className="relative aspect-[9/16] overflow-hidden">
-                    <img
-                      src={coverImage}
-                      alt={reel.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-charcoal/30 group-hover:bg-charcoal/40 transition-colors" />
-                    
-                    {/* Floating play icon button */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="grid h-14 w-14 place-items-center rounded-full bg-background/90 text-primary shadow-lg border border-primary/30 transition-transform duration-500 scale-95 group-hover:scale-105 group-hover:bg-primary group-hover:text-primary-foreground">
-                        <Play size={20} fill="currentColor" className="ml-1" />
-                      </span>
-                    </div>
-
-                    {/* Looks badge indicator */}
-                    <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-charcoal/70 backdrop-blur-md px-3 py-1 text-[0.68rem] text-background font-medium tracking-wide">
-                      <Film size={12} />
-                      LOOKS
-                    </div>
+                {/* Visual Image container */}
+                <div className="relative aspect-[9/16] overflow-hidden bg-charcoal">
+                  <img
+                    src={reel.thumbnail_url}
+                    alt={reel.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+                  />
+                  {/* Subtle luxury vignette gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-charcoal/90 via-charcoal/20 to-transparent opacity-85" />
+                  
+                  {/* Floating luxury Gold-trimmed play icon */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="grid h-12 w-12 place-items-center rounded-full bg-background/95 text-primary shadow-lg border border-primary/30 transition-all duration-500 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 group-hover:bg-primary group-hover:text-primary-foreground">
+                      <Play size={16} fill="currentColor" className="ml-0.5" />
+                    </span>
                   </div>
 
-                  {/* Reel text info footer */}
-                  <div className="p-5 border-t border-border/30">
-                    <h3 className="font-serif text-lg text-foreground truncate group-hover:text-primary transition-colors">
+                  {/* Looks badge indicator */}
+                  <div className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-charcoal/75 backdrop-blur-sm px-2.5 py-0.5 text-[0.62rem] text-background font-medium tracking-widest border border-background/10">
+                    <Instagram size={10} className="text-primary" />
+                    REEL
+                  </div>
+
+                  {/* Card Editorial Footer */}
+                  <div className="absolute inset-x-0 bottom-0 p-5 text-left flex flex-col justify-end">
+                    <span className="text-[0.62rem] eyebrow text-primary tracking-widest">STYLED BY ARYANSH</span>
+                    <h3 className="font-serif text-base text-background mt-1 truncate group-hover:text-primary transition-colors leading-snug">
                       {reel.title}
                     </h3>
-                    {product ? (
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                        <Sparkles size={12} className="text-primary/70 shrink-0" />
-                        Featuring: <span className="underline truncate max-w-[170px]">{product.name}</span>
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground mt-1 italic">Signature Look</p>
-                    )}
+                    <span className="h-[1px] w-6 bg-primary mt-2 transition-all duration-500 group-hover:w-12" />
                   </div>
                 </div>
-              </Reveal>
-            );
-          })}
+              </a>
+            </Reveal>
+          ))}
         </div>
       </div>
-
-      {/* Dynamic Native Playback Modal */}
-      {selectedReel && (() => {
-        const product = mappedProduct(selectedReel);
-
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm animate-fade-in">
-            {/* Click-away backdrop dismissal */}
-            <div 
-              onClick={() => setSelectedReel(null)} 
-              className="absolute inset-0 cursor-default" 
-            />
-
-            <div className="w-full max-w-4xl bg-background border border-border rounded-sm shadow-2xl overflow-hidden grid md:grid-cols-2 relative z-10 max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible">
-              
-              {/* Dismiss button */}
-              <button
-                onClick={() => setSelectedReel(null)}
-                className="absolute right-4 top-4 text-foreground/70 hover:text-foreground z-20 p-2 hover:scale-110 transition-transform bg-background/70 backdrop-blur-md rounded-full shadow-sm border border-border"
-                aria-label="Close modal"
-              >
-                <X size={18} />
-              </button>
-
-              {/* Video Player Column */}
-              <div className="bg-charcoal flex items-center justify-center h-[480px] md:h-[650px] relative border-b md:border-b-0 md:border-r border-border">
-                <video
-                  src={selectedReel.video_url}
-                  autoPlay
-                  controls
-                  loop
-                  playsInline
-                  className="w-full h-full object-cover bg-charcoal"
-                />
-              </div>
-
-              {/* Look Info & Checkout Cross-sell Column */}
-              <div className="p-6 md:p-10 flex flex-col justify-between h-[450px] md:h-[650px] bg-cream/30 overflow-y-auto">
-                <div className="space-y-6">
-                  <div>
-                    <span className="text-[0.7rem] eyebrow text-primary flex items-center gap-1.5 tracking-wider">
-                      <Sparkles size={12} />
-                      TRENDING LOOKS
-                    </span>
-                    <h2 className="font-serif text-2xl md:text-3xl text-foreground mt-2 leading-tight">
-                      {selectedReel.title}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                      Discover our exquisite luxury jewelry designs, curated and styled for modern elegance. Look styled by Aryansh Gold stylists.
-                    </p>
-                  </div>
-
-                  {/* Associated product look display */}
-                  {product ? (
-                    <div className="border border-border bg-background p-4 rounded-sm shadow-card flex gap-4 items-center">
-                      <div className="h-20 w-20 shrink-0 rounded-sm overflow-hidden border border-border bg-muted">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[0.65rem] eyebrow text-muted-foreground">Featured Jewel</span>
-                        <h4 className="font-serif text-base text-foreground truncate mt-0.5">{product.name}</h4>
-                        <div className="flex items-baseline gap-2 mt-1">
-                          <span className="text-sm font-medium text-foreground font-serif">₹{product.price.toLocaleString("en-IN")}</span>
-                          {product.originalPrice && (
-                            <span className="text-xs text-muted-foreground line-through font-serif">₹{product.originalPrice.toLocaleString("en-IN")}</span>
-                          )}
-                        </div>
-                        <Link
-                          to="/product/$slug"
-                          params={{ slug: product.slug }}
-                          onClick={() => setSelectedReel(null)}
-                          className="mt-2.5 inline-flex items-center gap-1.5 text-xs text-primary font-medium hover:text-foreground transition-colors group/link"
-                        >
-                          <ShoppingBag size={12} />
-                          Shop This Piece
-                          <ArrowRight size={10} className="translate-x-0 transition-transform group-hover/link:translate-x-0.5" />
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="border border-dashed border-border bg-background/50 p-6 rounded-sm text-center">
-                      <span className="text-xs text-muted-foreground italic">
-                        This custom style combines various signature items from our catalogs.
-                      </span>
-                      <Link
-                        to="/shop"
-                        onClick={() => setSelectedReel(null)}
-                        className="mt-3.5 inline-flex items-center justify-center gap-2 bg-foreground hover:bg-primary text-background hover:text-primary-foreground w-full py-2.5 eyebrow text-xs transition-colors rounded-sm"
-                      >
-                        Explore Curated Shop
-                      </Link>
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-6 border-t border-border mt-6">
-                  <p className="text-[0.68rem] text-center text-muted-foreground italic">
-                    Exquisite jewellery styled in house. Every piece is handcrafted to redefine luxury.
-                  </p>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        );
-      })()}
     </section>
   );
 }

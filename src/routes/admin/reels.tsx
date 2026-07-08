@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useStore } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { 
   Film, 
@@ -11,7 +10,8 @@ import {
   Loader2, 
   ExternalLink,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -22,19 +22,17 @@ export const Route = createFileRoute("/admin/reels")({
 });
 
 function AdminReels() {
-  const { products } = useStore();
   const [reels, setReels] = useState<DbReel[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Form states
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoUrl, setVideoUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [productId, setProductId] = useState("");
+  const [instagramUrl, setInstagramUrl] = useState("");
   const [isActive, setIsActive] = useState(true);
 
   const fetchReels = async () => {
@@ -42,7 +40,7 @@ function AdminReels() {
       setLoading(true);
       const { data, error } = await supabase
         .from("reels")
-        .select("*, products:product_id(id, name, image_url)")
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -62,10 +60,8 @@ function AdminReels() {
   const handleOpenAdd = () => {
     setEditingId(null);
     setTitle("");
-    setVideoFile(null);
-    setVideoUrl("");
     setThumbnailUrl("");
-    setProductId("");
+    setInstagramUrl("");
     setIsActive(true);
     setFormOpen(true);
   };
@@ -73,10 +69,8 @@ function AdminReels() {
   const handleOpenEdit = (reel: DbReel) => {
     setEditingId(reel.id);
     setTitle(reel.title);
-    setVideoFile(null);
-    setVideoUrl(reel.video_url);
-    setThumbnailUrl(reel.thumbnail_url || "");
-    setProductId(reel.product_id || "");
+    setThumbnailUrl(reel.thumbnail_url);
+    setInstagramUrl(reel.instagram_url);
     setIsActive(reel.is_active);
     setFormOpen(true);
   };
@@ -84,7 +78,32 @@ function AdminReels() {
   const handleCloseForm = () => {
     setFormOpen(false);
     setEditingId(null);
-    setVideoFile(null);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    try {
+      setUploadingImage(true);
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `reels/covers/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("catalog")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from("catalog").getPublicUrl(filePath);
+      setThumbnailUrl(data.publicUrl);
+      toast.success("Cover image uploaded successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleToggleActive = async (reel: DbReel) => {
@@ -100,7 +119,7 @@ function AdminReels() {
       setReels(prev => 
         prev.map(r => r.id === reel.id ? { ...r, is_active: nextActive } : r)
       );
-      toast.success(`Reel ${nextActive ? 'activated' : 'disabled'} successfully`);
+      toast.success(`Reel look ${nextActive ? 'activated' : 'disabled'} successfully`);
     } catch (error: any) {
       toast.error(error.message || "Failed to update status");
     }
@@ -118,7 +137,7 @@ function AdminReels() {
       if (error) throw error;
 
       setReels(prev => prev.filter(r => r.id !== id));
-      toast.success("Reel deleted successfully");
+      toast.success("Reel look deleted successfully");
     } catch (error: any) {
       toast.error(error.message || "Failed to delete reel");
     }
@@ -126,40 +145,21 @@ function AdminReels() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
-      toast.error("Please provide a title.");
+    if (!title.trim() || !instagramUrl.trim()) {
+      toast.error("Please fill in all required fields.");
       return;
     }
-    if (!editingId && !videoFile) {
-      toast.error("Please upload a video file for the reel.");
+    if (!thumbnailUrl.trim()) {
+      toast.error("Please upload or provide a cover thumbnail image.");
       return;
     }
 
     try {
       setSubmitting(true);
-      let finalVideoUrl = videoUrl;
-
-      // Handle video upload to Supabase Storage if a new file is chosen
-      if (videoFile) {
-        const fileExt = videoFile.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `reels/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("reels")
-          .upload(filePath, videoFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage.from("reels").getPublicUrl(filePath);
-        finalVideoUrl = data.publicUrl;
-      }
-
       const payload = {
         title: title.trim(),
-        video_url: finalVideoUrl,
-        thumbnail_url: thumbnailUrl.trim() || null,
-        product_id: productId || null,
+        thumbnail_url: thumbnailUrl.trim(),
+        instagram_url: instagramUrl.trim(),
         is_active: isActive
       };
 
@@ -190,15 +190,15 @@ function AdminReels() {
   };
 
   return (
-    <div className="py-10 px-5 md:px-8 max-w-7xl mx-auto">
+    <div className="py-10 px-5 md:px-8 max-w-7xl mx-auto font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-6">
         <div>
           <h1 className="font-serif text-3xl text-foreground flex items-center gap-3">
             <Film className="text-primary h-8 w-8" />
             Manage Reels
           </h1>
-          <p className="text-muted-foreground text-sm mt-1.5">
-            Configure raw video reels dynamically featured in the 'Trending Looks' homepage section.
+          <p className="text-muted-foreground text-sm mt-1.5 font-sans">
+            Configure beautiful visual gateway shortcuts linking to Instagram Reels on the storefront.
           </p>
         </div>
         <button
@@ -219,8 +219,8 @@ function AdminReels() {
         <div className="text-center py-20 border border-dashed rounded-sm mt-8 bg-background">
           <Film className="mx-auto h-12 w-12 text-muted-foreground/50 stroke-[1.2]" />
           <h3 className="mt-4 font-serif text-lg text-foreground">No Reels Configured</h3>
-          <p className="text-muted-foreground text-sm max-w-sm mx-auto mt-1.5">
-            Upload your first reel video to showcase product styling on the storefront.
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto mt-1.5 font-sans">
+            Create your first visual reel look mapping to showcase product curation and redirect traffic to your reels.
           </p>
           <button
             onClick={handleOpenAdd}
@@ -235,114 +235,86 @@ function AdminReels() {
             <table className="w-full border-collapse text-left text-sm text-foreground">
               <thead className="bg-muted/10 border-b border-border text-xs eyebrow tracking-wider text-muted-foreground">
                 <tr>
-                  <th scope="col" className="px-6 py-4">Cover / Preview</th>
+                  <th scope="col" className="px-6 py-4">Thumbnail Cover</th>
                   <th scope="col" className="px-6 py-4">Title</th>
-                  <th scope="col" className="px-6 py-4">Video Link</th>
-                  <th scope="col" className="px-6 py-4">Associated Product</th>
+                  <th scope="col" className="px-6 py-4">Instagram Target</th>
                   <th scope="col" className="px-6 py-4">Status</th>
                   <th scope="col" className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {reels.map((reel) => {
-                  const linkedProduct: any = reel.products;
-                  return (
-                    <tr key={reel.id} className="hover:bg-muted/5 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="h-20 w-12 rounded-sm overflow-hidden bg-muted relative border border-border flex items-center justify-center">
-                          {reel.thumbnail_url ? (
-                            <img
-                              src={reel.thumbnail_url}
-                              alt={reel.title}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : linkedProduct?.image_url ? (
-                            <img
-                              src={linkedProduct.image_url}
-                              alt={reel.title}
-                              className="h-full w-full object-cover opacity-60"
-                            />
-                          ) : (
-                            <Film className="h-6 w-6 text-muted-foreground/30" />
-                          )}
-                          <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                            <span className="text-[0.6rem] bg-foreground text-background px-1 py-0.5 rounded-sm scale-75 opacity-75 font-semibold">Video</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 font-medium max-w-xs truncate">
-                        {reel.title}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-xs max-w-xs truncate text-muted-foreground">
-                        <a
-                          href={reel.video_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-primary flex items-center gap-1.5"
-                        >
-                          Watch Video
-                          <ExternalLink size={12} />
-                        </a>
-                      </td>
-                      <td className="px-6 py-4 text-muted-foreground">
-                        {linkedProduct ? (
-                          <div className="flex items-center gap-2">
-                            {linkedProduct.image_url && (
-                              <img
-                                src={linkedProduct.image_url}
-                                alt={linkedProduct.name}
-                                className="h-8 w-8 rounded-sm object-cover"
-                              />
-                            )}
-                            <span className="text-xs font-serif max-w-[150px] truncate">{linkedProduct.name}</span>
-                          </div>
+                {reels.map((reel) => (
+                  <tr key={reel.id} className="hover:bg-muted/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="h-24 w-14 rounded-sm overflow-hidden bg-muted relative border border-border flex items-center justify-center">
+                        {reel.thumbnail_url ? (
+                          <img
+                            src={reel.thumbnail_url}
+                            alt={reel.title}
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
-                          <span className="text-xs italic">— None —</span>
+                          <Film className="h-6 w-6 text-muted-foreground/30" />
                         )}
-                      </td>
-                      <td className="px-6 py-4">
+                        <div className="absolute inset-0 bg-black/5" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 font-serif text-base text-foreground max-w-xs truncate">
+                      {reel.title}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-xs max-w-sm truncate text-muted-foreground">
+                      <a
+                        href={reel.instagram_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-primary flex items-center gap-1.5 font-sans"
+                      >
+                        {reel.instagram_url}
+                        <ExternalLink size={12} className="shrink-0" />
+                      </a>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleToggleActive(reel)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold eyebrow transition-all ${
+                          reel.is_active 
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                        }`}
+                      >
+                        {reel.is_active ? <Eye size={12} /> : <EyeOff size={12} />}
+                        {reel.is_active ? 'Active' : 'Disabled'}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-right text-muted-foreground">
+                      <div className="flex items-center justify-end gap-3">
                         <button
-                          onClick={() => handleToggleActive(reel)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold eyebrow transition-all ${
-                            reel.is_active 
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}
+                          onClick={() => handleOpenEdit(reel)}
+                          className="p-1.5 hover:text-foreground transition-colors hover:scale-105"
+                          title="Edit"
                         >
-                          {reel.is_active ? <Eye size={12} /> : <EyeOff size={12} />}
-                          {reel.is_active ? 'Active' : 'Disabled'}
+                          <Edit size={16} />
                         </button>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={() => handleOpenEdit(reel)}
-                            className="p-1.5 text-muted-foreground hover:text-foreground transition-colors hover:scale-105"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteReel(reel.id)}
-                            className="p-1.5 text-muted-foreground hover:text-rose-600 transition-colors hover:scale-105"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        <button
+                          onClick={() => handleDeleteReel(reel.id)}
+                          className="p-1.5 hover:text-rose-600 transition-colors hover:scale-105"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* Editor Drawer/Modal Overlay */}
+      {/* Form Drawer / Popup Overlay */}
       {formOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/50 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/50 backdrop-blur-sm animate-fade-in font-sans">
           <div className="w-full max-w-md bg-background border border-border p-6 rounded-sm shadow-xl relative">
             <button
               onClick={handleCloseForm}
@@ -350,7 +322,7 @@ function AdminReels() {
             >
               <X size={20} />
             </button>
-            <h2 className="font-serif text-2xl text-foreground mb-4 flex items-center gap-2">
+            <h2 className="font-serif text-2xl text-foreground mb-5 flex items-center gap-2">
               <Film size={22} className="text-primary" />
               {editingId ? "Edit Reel Look" : "Add Reel Look"}
             </h2>
@@ -362,74 +334,81 @@ function AdminReels() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Elegant Kundan Bridal Styling"
+                  placeholder="e.g. Traditional Gold Choker Styling"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary font-sans"
                 />
               </div>
 
               <div>
                 <label className="block text-xs eyebrow text-muted-foreground mb-1.5">
-                  Upload Reel Video (.mp4) *
-                </label>
-                {videoUrl && !videoFile && (
-                  <div className="mb-2 p-2 border rounded-sm bg-muted/10 text-xs flex items-center justify-between">
-                    <span className="truncate max-w-[200px] font-mono text-[0.65rem] text-muted-foreground">{videoUrl}</span>
-                    <span className="text-[0.62rem] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-sm border border-emerald-100 font-semibold shrink-0">Active Video</span>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="video/mp4"
-                  required={!editingId}
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setVideoFile(e.target.files[0]);
-                    }
-                  }}
-                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-xs"
-                />
-                <p className="text-[0.68rem] text-muted-foreground mt-1">
-                  Choose a raw mp4 video file. Suggested file size &lt; 5MB to ensure fast buffering.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs eyebrow text-muted-foreground mb-1.5">
-                  Custom Thumbnail Image URL (Optional)
+                  Instagram Reel URL *
                 </label>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/... or public image link"
-                  value={thumbnailUrl}
-                  onChange={(e) => setThumbnailUrl(e.target.value)}
-                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-xs"
+                  required
+                  placeholder="https://www.instagram.com/reel/C8a123bcdef/"
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary font-mono text-xs"
                 />
-                <p className="text-[0.68rem] text-muted-foreground mt-1">
-                  Provide an image URL to override the default linked product thumbnail.
+                <p className="text-[0.68rem] text-muted-foreground mt-1 font-sans">
+                  The destination Reel URL opened immediately when users click the thumbnail.
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs eyebrow text-muted-foreground mb-1.5">
-                  Link Associated Product (Optional)
+                  Thumbnail Cover Image *
                 </label>
-                <select
-                  value={productId}
-                  onChange={(e) => setProductId(e.target.value)}
-                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">-- No Linked Product --</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[0.68rem] text-muted-foreground mt-1">
-                  Enables shop-the-look buy CTAs inside the reel modal display.
-                </p>
+                <div className="mt-1 flex items-center gap-4">
+                  <div className="h-28 w-16 bg-muted border rounded-sm overflow-hidden flex items-center justify-center relative shrink-0">
+                    {thumbnailUrl ? (
+                      <img src={thumbnailUrl} alt="Thumbnail preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <Film className="h-6 w-6 text-muted-foreground/30" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <label className="inline-flex items-center gap-1.5 bg-background border border-foreground hover:bg-muted/10 text-foreground cursor-pointer px-4 py-2 eyebrow text-xs rounded-sm transition-all shadow-sm">
+                      {uploadingImage ? (
+                        <>
+                          <Loader2 size={12} className="animate-spin text-primary" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={12} />
+                          Upload Photo
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-[0.68rem] text-muted-foreground mt-1.5 font-sans leading-normal">
+                      Provide a high-quality vertical portrait cover image (9:16 aspect ratio).
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="mt-3">
+                  <label className="block text-[0.68rem] eyebrow text-muted-foreground/80 mb-1">
+                    Or paste Image URL directly
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/... or public URL"
+                    value={thumbnailUrl}
+                    onChange={(e) => setThumbnailUrl(e.target.value)}
+                    className="w-full rounded-sm border bg-background px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-3 pt-2">
@@ -455,8 +434,8 @@ function AdminReels() {
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
-                  className="bg-foreground hover:bg-primary text-background hover:text-primary-foreground px-5 py-2 eyebrow transition-colors rounded-sm inline-flex items-center gap-1.5"
+                  disabled={submitting || uploadingImage}
+                  className="bg-foreground hover:bg-primary text-background hover:text-primary-foreground px-5 py-2 eyebrow transition-colors rounded-sm inline-flex items-center gap-1.5 shadow-sm"
                 >
                   {submitting && <Loader2 size={12} className="animate-spin" />}
                   <Save size={14} />
