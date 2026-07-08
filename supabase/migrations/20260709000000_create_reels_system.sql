@@ -1,7 +1,7 @@
 -- Create reels table matching gateway-only requirements
 CREATE TABLE IF NOT EXISTS public.reels (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  title TEXT NOT NULL,
+  title TEXT, -- Optional title
   thumbnail_url TEXT NOT NULL,
   instagram_url TEXT NOT NULL,
   is_active BOOLEAN DEFAULT true NOT NULL,

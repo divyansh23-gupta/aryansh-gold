@@ -230,7 +230,7 @@ export interface DbOrderStatusHistory {
 
 export interface DbReel {
   id: string;
-  title: string;
+  title: string | null;
   thumbnail_url: string;
   instagram_url: string;
   is_active: boolean;

@@ -68,7 +68,7 @@ function AdminReels() {
 
   const handleOpenEdit = (reel: DbReel) => {
     setEditingId(reel.id);
-    setTitle(reel.title);
+    setTitle(reel.title || "");
     setThumbnailUrl(reel.thumbnail_url);
     setInstagramUrl(reel.instagram_url);
     setIsActive(reel.is_active);
@@ -145,8 +145,8 @@ function AdminReels() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !instagramUrl.trim()) {
-      toast.error("Please fill in all required fields.");
+    if (!instagramUrl.trim()) {
+      toast.error("Please provide the Instagram Reel URL.");
       return;
     }
     if (!thumbnailUrl.trim()) {
@@ -157,7 +157,7 @@ function AdminReels() {
     try {
       setSubmitting(true);
       const payload = {
-        title: title.trim(),
+        title: title.trim() || null,
         thumbnail_url: thumbnailUrl.trim(),
         instagram_url: instagramUrl.trim(),
         is_active: isActive
@@ -250,7 +250,7 @@ function AdminReels() {
                         {reel.thumbnail_url ? (
                           <img
                             src={reel.thumbnail_url}
-                            alt={reel.title}
+                            alt={reel.title || "Reel Look"}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -329,11 +329,10 @@ function AdminReels() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs eyebrow text-muted-foreground mb-1.5">
-                  Reel Title *
+                  Reel Title (Optional)
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Traditional Gold Choker Styling"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
