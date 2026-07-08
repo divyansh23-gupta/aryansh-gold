@@ -19,6 +19,39 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const MOCK_REELS: DbReel[] = [
+  {
+    id: "mock-reel-1",
+    title: "Elegant Kundan Bridal Styling",
+    reel_url: "https://www.instagram.com/reel/C3_80fSM_1u/",
+    thumbnail_url: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop",
+    product_id: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "mock-reel-2",
+    title: "Traditional Heritage Gold Jhumkas",
+    reel_url: "https://www.instagram.com/reel/Cz3YvHov9y-/",
+    thumbnail_url: "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=600&auto=format&fit=crop",
+    product_id: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: "mock-reel-3",
+    title: "Royal Antique Bangles Set",
+    reel_url: "https://www.instagram.com/reel/C89o2o2x123/",
+    thumbnail_url: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&auto=format&fit=crop",
+    product_id: null,
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
 function getInstagramEmbedUrl(url: string): string {
   if (!url) return "";
   const cleanUrl = url.split("?")[0];
@@ -51,9 +84,10 @@ export function TrendingLooks() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setReels(data || []);
+        setReels(data && data.length > 0 ? data : MOCK_REELS);
       } catch (error: any) {
-        console.warn("Could not load reels:", error.message);
+        console.warn("Could not load reels from db, using mocks:", error.message);
+        setReels(MOCK_REELS);
       } finally {
         setLoading(false);
       }
