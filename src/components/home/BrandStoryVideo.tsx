@@ -1,10 +1,23 @@
+import { useEffect, useRef } from "react";
 import { Play } from "lucide-react";
 import videoPoster from "@/assets/video-poster.jpg";
 
 export function BrandStoryVideo() {
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      imgRef.current.classList.add("is-loaded");
+    }
+  }, []);
+
   return (
-    <section className="relative h-[88vh] min-h-[560px] w-full overflow-hidden bg-charcoal">
+    <section 
+      className="relative h-[88vh] min-h-[560px] w-full overflow-hidden"
+      style={{ backgroundColor: "var(--charcoal)" }}
+    >
       <img
+        ref={imgRef}
         src={videoPoster}
         alt="Aryansh Gold craftsmanship"
         loading="lazy"
@@ -13,7 +26,10 @@ export function BrandStoryVideo() {
         className="h-full w-full scale-105 object-cover opacity-0 transition-opacity duration-700 [&.is-loaded]:opacity-100"
         onLoad={(e) => e.currentTarget.classList.add("is-loaded")}
       />
-      <div className="absolute inset-0 bg-charcoal/65" />
+      <div 
+        className="absolute inset-0" 
+        style={{ backgroundColor: "rgba(28, 28, 28, 0.65)" }}
+      />
       <div
         className="absolute inset-0"
         style={{ background: "var(--gradient-overlay)" }}
