@@ -1,6 +1,7 @@
 import { Reveal } from "@/components/ui-custom/Reveal";
 import { SectionHeading } from "@/components/ui-custom/SectionHeading";
 import { useStore } from "@/lib/store";
+import { Link } from "@tanstack/react-router";
 
 export function PopularCategories() {
   const { popularCategories } = useStore();
@@ -16,7 +17,7 @@ export function PopularCategories() {
         <div className="mt-14 grid grid-cols-3 gap-6 md:grid-cols-6 md:gap-8">
           {popularCategories.map((cat, i) => (
             <Reveal key={cat.name} delay={i * 80} className="flex flex-col items-center">
-              <a href="#" className="group flex flex-col items-center text-center">
+              <Link to="/shop" search={{ category: cat.name }} className="group flex flex-col items-center text-center">
                 <div className="relative overflow-hidden rounded-full ring-1 ring-border transition-all duration-500 group-hover:ring-primary">
                   <img
                     src={cat.image}
@@ -30,7 +31,7 @@ export function PopularCategories() {
                 <span className="mt-4 text-xs font-medium text-foreground md:text-sm">
                   {cat.name}
                 </span>
-              </a>
+              </Link>
             </Reveal>
           ))}
         </div>

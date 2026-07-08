@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { SlidersHorizontal, X, ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,12 @@ import { useStore } from "@/lib/store";
 import bannerRings from "@/assets/banner-rings.jpg";
 
 export const Route = createFileRoute("/shop")({
+  validateSearch: (search: Record<string, unknown>): { category?: string; collection?: string } => {
+    return {
+      category: search.category as string | undefined,
+      collection: search.collection as string | undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Shop All — Aryansh Gold" },
@@ -53,6 +59,7 @@ const PAGE_SIZE = 8;
 
 function ShopPage() {
   const { products, categories, catalogLoading } = useStore();
+  const { category, collection } = Route.useSearch();
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [priceRange, setPriceRange] = useState("all");
   const [newArrivals, setNewArrivals] = useState(false);
@@ -61,6 +68,15 @@ function ShopPage() {
   const [sort, setSort] = useState<SortKey>("featured");
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Sync category search param to selectedCategories state
+  useEffect(() => {
+    if (category) {
+      setSelectedCategories([category as Category]);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [category]);
 
   const toggleCategory = (c: Category) => {
     setPage(1);
@@ -82,6 +98,8 @@ function ShopPage() {
     const range = priceRanges.find((r) => r.key === priceRange)!;
     const list = products.filter((p) => {
       if (selectedCategories.length && !selectedCategories.includes(p.category))
+        return false;
+      if (collection && !p.collections?.some((c) => c.title.toLowerCase() === collection.toLowerCase()))
         return false;
       if (!range.test(p)) return false;
       if (newArrivals && !p.isNew) return false;
@@ -108,7 +126,7 @@ function ShopPage() {
         sorted.sort((a, b) => discountPercent(b) - discountPercent(a));
     }
     return sorted;
-  }, [products, selectedCategories, priceRange, newArrivals, bestSellers, inStockOnly, sort]);
+  }, [products, selectedCategories, priceRange, newArrivals, bestSellers, inStockOnly, sort, collection]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const current = Math.min(page, totalPages);
@@ -125,7 +143,7 @@ function ShopPage() {
     <div className="space-y-9">
       <FilterGroup title="Categories">
         <div className="space-y-2.5">
-          {categories.map((c) => (
+          {(categories as Category[]).map((c) => (
             <CheckRow
               key={c}
               label={c}

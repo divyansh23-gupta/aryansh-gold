@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
+
 
 interface Slide {
   image: string;
@@ -98,9 +100,9 @@ export function Hero() {
             {slides[index].subtitle}
           </p>
           <div className="mt-10 animate-fade-up" style={{ animationDelay: "0.35s" }}>
-            <button className="bg-background px-10 py-4 eyebrow text-foreground transition-colors duration-300 hover:bg-primary hover:text-primary-foreground">
+            <Link to="/shop" className="inline-block bg-background px-10 py-4 eyebrow text-foreground transition-colors duration-300 hover:bg-primary hover:text-primary-foreground">
               {slides[index].cta}
-            </button>
+            </Link>
           </div>
         </div>
       </div>

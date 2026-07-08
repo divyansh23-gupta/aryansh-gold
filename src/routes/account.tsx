@@ -25,9 +25,9 @@ import {
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/account")({
-  validateSearch: (search: Record<string, unknown>) => {
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => {
     return {
-      tab: (search.tab as string) || "profile",
+      tab: search.tab as string | undefined,
     };
   },
   head: () => ({
@@ -57,7 +57,7 @@ const orders: any[] = [];
 function AccountPage() {
   const { user, profile, logout, updateProfile, loading: authLoading } = useAuth();
   const { products, wishlist, removeFromWishlist, addToCart } = useStore();
-  const navigate = useNavigate();
+  const navigate = useNavigate({ from: "/account" });
 
   // Navigation Guard: Redirect to login if not authenticated
   useEffect(() => {
@@ -77,6 +77,7 @@ function AccountPage() {
   const setActiveTab = (newTab: string) => {
     navigate({ search: { tab: newTab } });
   };
+
 
   // Profile Form States
   const [fullName, setFullName] = useState("");

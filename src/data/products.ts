@@ -13,6 +13,19 @@ export type Category =
   | "Jewellery Sets"
   | "Bridal";
 
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  sku: string;
+  size: string | null;
+  color: string | null;
+  price: number;
+  comparePrice?: number;
+  stockQuantity: number;
+  reservedQuantity: number;
+  status: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -28,8 +41,10 @@ export interface Product {
   description: string;
   materials: string;
   care: string;
+  variants?: ProductVariant[];
   collections?: { id: string; title: string }[];
 }
+
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 export const formatPrice = inr;

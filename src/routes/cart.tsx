@@ -225,12 +225,14 @@ function CartPage() {
                 </span>
               </div>
 
-              <button
-                type="button"
-                className="mt-6 w-full bg-foreground py-4 eyebrow text-background transition-colors hover:bg-primary"
-              >
-                Proceed to Checkout
-              </button>
+              <Link to="/checkout" className="block mt-6 w-full text-center">
+                <button
+                  type="button"
+                  className="w-full bg-foreground py-4 eyebrow text-background transition-colors hover:bg-primary cursor-pointer"
+                >
+                  Proceed to Checkout
+                </button>
+              </Link>
 
               <div className="mt-6 grid gap-3 border-t border-border pt-6">
                 <Perk icon={ShieldCheck} text="Secure, encrypted checkout" />

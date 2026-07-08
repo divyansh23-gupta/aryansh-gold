@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/ui-custom/Reveal";
 import { useStore } from "@/lib/store";
+import { Link } from "@tanstack/react-router";
 
 export function FeaturedCollections() {
   const { collections } = useStore();
@@ -10,7 +11,7 @@ export function FeaturedCollections() {
       <div className="grid gap-6 md:grid-cols-3">
         {collections.map((c, i) => (
           <Reveal key={c.title} delay={i * 120} as="article">
-            <a href="#" className="group block">
+            <Link to="/shop" search={{ collection: c.title }} className="group block">
               <div className="relative overflow-hidden">
                 <img
                   src={c.image}
@@ -32,7 +33,7 @@ export function FeaturedCollections() {
                   </h3>
                 </div>
               </div>
-            </a>
+            </Link>
           </Reveal>
         ))}
       </div>

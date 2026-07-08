@@ -210,7 +210,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           try {
             const guest = JSON.parse(rawGuest);
             const guestCart = Array.isArray(guest.cart) ? guest.cart : [];
-            const guestWish = Array.isArray(guest.wishlist) ? guest.wishlist : [];
+            const guestWish: string[] = Array.isArray(guest.wishlist) ? guest.wishlist : [];
 
             // A. Merge Wishlist
             const mergedWishlist = Array.from(new Set([...guestWish, ...dbWishIds]));
