@@ -22,8 +22,8 @@ import { toast } from "sonner";
 const MOCK_REELS: DbReel[] = [
   {
     id: "mock-reel-1",
-    title: "Elegant Kundan Bridal Styling",
-    reel_url: "https://www.instagram.com/reel/C3_80fSM_1u/",
+    title: "Aryansh Luxury Jewels Reel",
+    reel_url: "https://www.instagram.com/reel/DaMY5vasd_9/",
     thumbnail_url: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop",
     product_id: null,
     is_active: true,
