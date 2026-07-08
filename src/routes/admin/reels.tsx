@@ -392,7 +392,7 @@ function AdminReels() {
                       />
                     </label>
                     <p className="text-[0.68rem] text-muted-foreground mt-1.5 font-sans leading-normal">
-                      Provide a high-quality vertical portrait cover image (9:16 aspect ratio).
+                      Upload the same cover image used for the Instagram Reel to ensure visual consistency between Instagram and the Aryansh Gold storefront.
                     </p>
                   </div>
                 </div>
