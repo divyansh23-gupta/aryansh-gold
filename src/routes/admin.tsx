@@ -17,7 +17,8 @@ import {
   CreditCard,
   ChevronDown,
   User as UserIcon,
-  Store
+  Store,
+  Film
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,6 +78,7 @@ function AdminLayout() {
     { label: "Collections", to: "/admin/collections", icon: Settings },
     { label: "Inventory", to: "/admin/inventory", icon: PackageCheck },
     { label: "Orders", to: "/admin/orders", icon: CreditCard },
+    { label: "Reels", to: "/admin/reels", icon: Film },
   ];
 
   // Super-admin only links

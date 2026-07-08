@@ -28,6 +28,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminUnauthorizedRouteImport } from './routes/admin/unauthorized'
+import { Route as AdminReelsRouteImport } from './routes/admin/reels'
 import { Route as AdminInventoryRouteImport } from './routes/admin/inventory'
 import { Route as AdminCollectionsRouteImport } from './routes/admin/collections'
 import { Route as AdminCategoriesRouteImport } from './routes/admin/categories'
@@ -132,6 +133,11 @@ const AdminUnauthorizedRoute = AdminUnauthorizedRouteImport.update({
   path: '/unauthorized',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminReelsRoute = AdminReelsRouteImport.update({
+  id: '/reels',
+  path: '/reels',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminInventoryRoute = AdminInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/collections': typeof AdminCollectionsRoute
   '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/reels': typeof AdminReelsRoute
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/collections': typeof AdminCollectionsRoute
   '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/reels': typeof AdminReelsRoute
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/admin/categories': typeof AdminCategoriesRoute
   '/admin/collections': typeof AdminCollectionsRoute
   '/admin/inventory': typeof AdminInventoryRoute
+  '/admin/reels': typeof AdminReelsRoute
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
   '/product/$slug': typeof ProductSlugRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/collections'
     | '/admin/inventory'
+    | '/admin/reels'
     | '/admin/unauthorized'
     | '/admin/users'
     | '/product/$slug'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/collections'
     | '/admin/inventory'
+    | '/admin/reels'
     | '/admin/unauthorized'
     | '/admin/users'
     | '/product/$slug'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/collections'
     | '/admin/inventory'
+    | '/admin/reels'
     | '/admin/unauthorized'
     | '/admin/users'
     | '/product/$slug'
@@ -503,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUnauthorizedRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/reels': {
+      id: '/admin/reels'
+      path: '/reels'
+      fullPath: '/admin/reels'
+      preLoaderRoute: typeof AdminReelsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/inventory': {
       id: '/admin/inventory'
       path: '/inventory'
@@ -566,6 +585,7 @@ interface AdminRouteChildren {
   AdminCategoriesRoute: typeof AdminCategoriesRoute
   AdminCollectionsRoute: typeof AdminCollectionsRoute
   AdminInventoryRoute: typeof AdminInventoryRoute
+  AdminReelsRoute: typeof AdminReelsRoute
   AdminUnauthorizedRoute: typeof AdminUnauthorizedRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -580,6 +600,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriesRoute: AdminCategoriesRoute,
   AdminCollectionsRoute: AdminCollectionsRoute,
   AdminInventoryRoute: AdminInventoryRoute,
+  AdminReelsRoute: AdminReelsRoute,
   AdminUnauthorizedRoute: AdminUnauthorizedRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,

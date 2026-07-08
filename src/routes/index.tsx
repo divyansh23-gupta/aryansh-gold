@@ -4,6 +4,7 @@ import { FeaturedCollections } from "@/components/home/FeaturedCollections";
 import { PopularCategories } from "@/components/home/PopularCategories";
 import { TrendingCollection } from "@/components/home/TrendingCollection";
 import { TopStyles } from "@/components/home/TopStyles";
+import { TrendingLooks } from "@/components/home/TrendingLooks";
 import { BrandStoryVideo } from "@/components/home/BrandStoryVideo";
 import { FeaturedBanners } from "@/components/home/FeaturedBanners";
 import { VisitStore } from "@/components/home/VisitStore";
@@ -23,6 +24,7 @@ function Index() {
       <PopularCategories />
       <TrendingCollection />
       <TopStyles />
+      <TrendingLooks />
       <BrandStoryVideo />
       <FeaturedBanners />
       <VisitStore />
