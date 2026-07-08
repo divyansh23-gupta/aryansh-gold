@@ -65,6 +65,7 @@ export function TrendingLooks() {
   const [loading, setLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchActiveReels = async () => {
@@ -89,6 +90,39 @@ export function TrendingLooks() {
     fetchActiveReels();
   }, []);
 
+  // Custom smooth scroll animation that takes exactly `duration` ms
+  const animateScroll = (targetScrollLeft: number, duration: number = 1200) => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+    const start = container.scrollLeft;
+    const change = targetScrollLeft - start;
+    const startTime = performance.now();
+
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+
+    const easeOutCubic = (t: number) => {
+      return 1 - Math.pow(1 - t, 3);
+    };
+
+    const animate = (currentTime: number) => {
+      const timeElapsed = currentTime - startTime;
+      const progress = Math.min(timeElapsed / duration, 1);
+      const easeProgress = easeOutCubic(progress);
+
+      container.scrollLeft = start + change * easeProgress;
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        animationRef.current = null;
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+  };
+
   // Initialize scroll position in the middle set for infinite scroll
   useEffect(() => {
     if (!loading && reels.length > 0 && scrollContainerRef.current) {
@@ -104,7 +138,7 @@ export function TrendingLooks() {
     }
   }, [loading, reels.length]);
 
-  // Autoplay functionality: advances every 4.5 seconds
+  // Autoplay functionality: advances every 6 seconds with a slow 1.2s slide
   useEffect(() => {
     if (loading || reels.length === 0 || isHovered) return;
 
@@ -114,14 +148,16 @@ export function TrendingLooks() {
         const firstCard = container.firstElementChild as HTMLElement;
         const scrollAmount = firstCard ? firstCard.offsetWidth + 24 : 300; // card width + gap-6
         
-        container.scrollBy({
-          left: scrollAmount,
-          behavior: "smooth"
-        });
+        animateScroll(container.scrollLeft + scrollAmount, 1200);
       }
-    }, 4500);
+    }, 6000); // 6 seconds
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [loading, reels.length, isHovered]);
 
   // Handle seamless infinite wrapping on scroll
@@ -144,10 +180,11 @@ export function TrendingLooks() {
       const firstCard = container.firstElementChild as HTMLElement;
       const scrollAmount = firstCard ? firstCard.offsetWidth + 24 : 300;
       
-      container.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth"
-      });
+      const target = direction === "left" 
+        ? container.scrollLeft - scrollAmount 
+        : container.scrollLeft + scrollAmount;
+
+      animateScroll(target, 1200);
     }
   };
 
@@ -215,7 +252,7 @@ export function TrendingLooks() {
           onMouseLeave={() => setIsHovered(false)}
           onTouchStart={() => setIsHovered(true)}
           onTouchEnd={() => setIsHovered(false)}
-          className="no-scrollbar mt-10 flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4"
+          className="no-scrollbar mt-10 flex gap-6 overflow-x-auto pb-4"
         >
           {extendedReels.map((reel, i) => (
             <Reveal
