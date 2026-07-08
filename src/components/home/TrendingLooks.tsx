@@ -173,7 +173,7 @@ export function TrendingLooks() {
                 <div className="relative aspect-[9/16] overflow-hidden bg-charcoal">
                   <img
                     src={reel.thumbnail_url}
-                    alt={reel.title || "Styled by Aryansh"}
+                    alt={reel.title || "Aryansh Signature"}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
                   />
@@ -197,7 +197,7 @@ export function TrendingLooks() {
                   <div className="absolute inset-x-0 bottom-0 p-5 text-left flex flex-col justify-end">
                     <span className="text-[0.62rem] eyebrow text-primary tracking-widest">STYLED BY ARYANSH</span>
                     <h3 className="font-serif text-base text-background mt-1 truncate group-hover:text-primary transition-colors leading-snug">
-                      {reel.title || "Styled by Aryansh"}
+                      {reel.title || "Aryansh Signature"}
                     </h3>
                     <span className="h-[1px] w-6 bg-primary mt-2 transition-all duration-500 group-hover:w-12" />
                   </div>
