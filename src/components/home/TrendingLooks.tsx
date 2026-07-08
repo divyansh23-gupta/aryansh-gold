@@ -66,6 +66,8 @@ export function TrendingLooks() {
   const [isHovered, setIsHovered] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const animationRef = useRef<number | null>(null);
+  const driftRequestRef = useRef<number | null>(null);
+  const scrollLeftPosRef = useRef<number>(0);
 
   useEffect(() => {
     const fetchActiveReels = async () => {
@@ -90,7 +92,7 @@ export function TrendingLooks() {
     fetchActiveReels();
   }, []);
 
-  // Custom smooth scroll animation that takes exactly `duration` ms
+  // Custom smooth scroll animation for manual chevron navigation
   const animateScroll = (targetScrollLeft: number, duration: number = 1200) => {
     if (!scrollContainerRef.current) return;
     const container = scrollContainerRef.current;
@@ -111,7 +113,9 @@ export function TrendingLooks() {
       const progress = Math.min(timeElapsed / duration, 1);
       const easeProgress = easeOutCubic(progress);
 
-      container.scrollLeft = start + change * easeProgress;
+      const nextScrollLeft = start + change * easeProgress;
+      container.scrollLeft = nextScrollLeft;
+      scrollLeftPosRef.current = nextScrollLeft; // Sync the drift position ref
 
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
@@ -130,6 +134,7 @@ export function TrendingLooks() {
       const adjustInitialScroll = () => {
         const singleSetWidth = container.scrollWidth / 3;
         container.scrollLeft = singleSetWidth;
+        scrollLeftPosRef.current = singleSetWidth;
       };
       
       adjustInitialScroll();
@@ -138,38 +143,58 @@ export function TrendingLooks() {
     }
   }, [loading, reels.length]);
 
-  // Autoplay functionality: advances every 6 seconds with a slow 1.2s slide
+  // Buttery-smooth, slow marquee drift using requestAnimationFrame
   useEffect(() => {
-    if (loading || reels.length === 0 || isHovered) return;
+    if (loading || reels.length === 0) return;
 
-    const interval = setInterval(() => {
-      if (scrollContainerRef.current) {
+    const driftSpeed = 0.55; // Pixels per frame - yields a slow premium drifting speed
+
+    const updateDrift = () => {
+      if (scrollContainerRef.current && !isHovered) {
         const container = scrollContainerRef.current;
-        const firstCard = container.firstElementChild as HTMLElement;
-        const scrollAmount = firstCard ? firstCard.offsetWidth + 24 : 300; // card width + gap-6
         
-        animateScroll(container.scrollLeft + scrollAmount, 1200);
+        // Slowly increment position
+        scrollLeftPosRef.current += driftSpeed;
+
+        // Infinite loop seamless wrap
+        const singleSetWidth = container.scrollWidth / 3;
+        if (scrollLeftPosRef.current >= singleSetWidth * 2) {
+          scrollLeftPosRef.current -= singleSetWidth;
+        } else if (scrollLeftPosRef.current <= singleSetWidth - container.clientWidth) {
+          scrollLeftPosRef.current += singleSetWidth;
+        }
+
+        container.scrollLeft = Math.round(scrollLeftPosRef.current);
       }
-    }, 6000); // 6 seconds
+      driftRequestRef.current = requestAnimationFrame(updateDrift);
+    };
+
+    driftRequestRef.current = requestAnimationFrame(updateDrift);
 
     return () => {
-      clearInterval(interval);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      if (driftRequestRef.current) {
+        cancelAnimationFrame(driftRequestRef.current);
       }
     };
   }, [loading, reels.length, isHovered]);
 
-  // Handle seamless infinite wrapping on scroll
+  // Handle seamless infinite wrapping on scroll and sync manual swipes
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
       const singleSetWidth = container.scrollWidth / 3;
+
+      // Sync position ref if user is manually swiping/scrolling
+      if (Math.abs(container.scrollLeft - scrollLeftPosRef.current) > 5) {
+        scrollLeftPosRef.current = container.scrollLeft;
+      }
       
       if (container.scrollLeft >= singleSetWidth * 2) {
         container.scrollLeft -= singleSetWidth;
+        scrollLeftPosRef.current -= singleSetWidth;
       } else if (container.scrollLeft <= singleSetWidth - container.clientWidth) {
         container.scrollLeft += singleSetWidth;
+        scrollLeftPosRef.current += singleSetWidth;
       }
     }
   };
