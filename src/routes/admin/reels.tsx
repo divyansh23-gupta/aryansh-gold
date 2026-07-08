@@ -31,7 +31,8 @@ function AdminReels() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [reelUrl, setReelUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [productId, setProductId] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -61,7 +62,8 @@ function AdminReels() {
   const handleOpenAdd = () => {
     setEditingId(null);
     setTitle("");
-    setReelUrl("");
+    setVideoFile(null);
+    setVideoUrl("");
     setThumbnailUrl("");
     setProductId("");
     setIsActive(true);
@@ -71,7 +73,8 @@ function AdminReels() {
   const handleOpenEdit = (reel: DbReel) => {
     setEditingId(reel.id);
     setTitle(reel.title);
-    setReelUrl(reel.reel_url);
+    setVideoFile(null);
+    setVideoUrl(reel.video_url);
     setThumbnailUrl(reel.thumbnail_url || "");
     setProductId(reel.product_id || "");
     setIsActive(reel.is_active);
@@ -81,6 +84,7 @@ function AdminReels() {
   const handleCloseForm = () => {
     setFormOpen(false);
     setEditingId(null);
+    setVideoFile(null);
   };
 
   const handleToggleActive = async (reel: DbReel) => {
@@ -103,7 +107,7 @@ function AdminReels() {
   };
 
   const handleDeleteReel = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this Instagram reel?")) return;
+    if (!confirm("Are you sure you want to delete this reel look?")) return;
 
     try {
       const { error } = await supabase
@@ -122,16 +126,38 @@ function AdminReels() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !reelUrl.trim()) {
-      toast.error("Please fill in all required fields.");
+    if (!title.trim()) {
+      toast.error("Please provide a title.");
+      return;
+    }
+    if (!editingId && !videoFile) {
+      toast.error("Please upload a video file for the reel.");
       return;
     }
 
     try {
       setSubmitting(true);
+      let finalVideoUrl = videoUrl;
+
+      // Handle video upload to Supabase Storage if a new file is chosen
+      if (videoFile) {
+        const fileExt = videoFile.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `reels/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("reels")
+          .upload(filePath, videoFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage.from("reels").getPublicUrl(filePath);
+        finalVideoUrl = data.publicUrl;
+      }
+
       const payload = {
         title: title.trim(),
-        reel_url: reelUrl.trim(),
+        video_url: finalVideoUrl,
         thumbnail_url: thumbnailUrl.trim() || null,
         product_id: productId || null,
         is_active: isActive
@@ -172,7 +198,7 @@ function AdminReels() {
             Manage Reels
           </h1>
           <p className="text-muted-foreground text-sm mt-1.5">
-            Configure Instagram Reels dynamically featured in the 'Trending Looks' homepage section.
+            Configure raw video reels dynamically featured in the 'Trending Looks' homepage section.
           </p>
         </div>
         <button
@@ -194,7 +220,7 @@ function AdminReels() {
           <Film className="mx-auto h-12 w-12 text-muted-foreground/50 stroke-[1.2]" />
           <h3 className="mt-4 font-serif text-lg text-foreground">No Reels Configured</h3>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto mt-1.5">
-            Create your first reel lookup link to showcase product styling on the storefront.
+            Upload your first reel video to showcase product styling on the storefront.
           </p>
           <button
             onClick={handleOpenAdd}
@@ -211,7 +237,7 @@ function AdminReels() {
                 <tr>
                   <th scope="col" className="px-6 py-4">Cover / Preview</th>
                   <th scope="col" className="px-6 py-4">Title</th>
-                  <th scope="col" className="px-6 py-4">Instagram Link</th>
+                  <th scope="col" className="px-6 py-4">Video Link</th>
                   <th scope="col" className="px-6 py-4">Associated Product</th>
                   <th scope="col" className="px-6 py-4">Status</th>
                   <th scope="col" className="px-6 py-4 text-right">Actions</th>
@@ -240,7 +266,7 @@ function AdminReels() {
                             <Film className="h-6 w-6 text-muted-foreground/30" />
                           )}
                           <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                            <span className="text-[0.6rem] bg-foreground text-background px-1 py-0.5 rounded-sm scale-75 opacity-75 font-semibold">Reel</span>
+                            <span className="text-[0.6rem] bg-foreground text-background px-1 py-0.5 rounded-sm scale-75 opacity-75 font-semibold">Video</span>
                           </div>
                         </div>
                       </td>
@@ -249,12 +275,12 @@ function AdminReels() {
                       </td>
                       <td className="px-6 py-4 font-mono text-xs max-w-xs truncate text-muted-foreground">
                         <a
-                          href={reel.reel_url}
+                          href={reel.video_url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="hover:text-primary flex items-center gap-1.5"
                         >
-                          Instagram Post
+                          Watch Video
                           <ExternalLink size={12} />
                         </a>
                       </td>
@@ -345,18 +371,27 @@ function AdminReels() {
 
               <div>
                 <label className="block text-xs eyebrow text-muted-foreground mb-1.5">
-                  Instagram Reel URL *
+                  Upload Reel Video (.mp4) *
                 </label>
+                {videoUrl && !videoFile && (
+                  <div className="mb-2 p-2 border rounded-sm bg-muted/10 text-xs flex items-center justify-between">
+                    <span className="truncate max-w-[200px] font-mono text-[0.65rem] text-muted-foreground">{videoUrl}</span>
+                    <span className="text-[0.62rem] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-sm border border-emerald-100 font-semibold shrink-0">Active Video</span>
+                  </div>
+                )}
                 <input
-                  type="url"
-                  required
-                  placeholder="https://www.instagram.com/reel/C8a123bcdef/"
-                  value={reelUrl}
-                  onChange={(e) => setReelUrl(e.target.value)}
-                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary font-mono text-xs"
+                  type="file"
+                  accept="video/mp4"
+                  required={!editingId}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setVideoFile(e.target.files[0]);
+                    }
+                  }}
+                  className="w-full rounded-sm border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-xs"
                 />
                 <p className="text-[0.68rem] text-muted-foreground mt-1">
-                  Paste the direct Instagram post or reel address.
+                  Choose a raw mp4 video file. Suggested file size &lt; 5MB to ensure fast buffering.
                 </p>
               </div>
 

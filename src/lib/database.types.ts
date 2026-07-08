@@ -231,7 +231,7 @@ export interface DbOrderStatusHistory {
 export interface DbReel {
   id: string;
   title: string;
-  reel_url: string;
+  video_url: string;
   thumbnail_url: string | null;
   product_id: string | null;
   is_active: boolean;

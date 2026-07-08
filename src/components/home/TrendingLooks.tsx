@@ -11,19 +11,18 @@ import {
   X, 
   ChevronLeft, 
   ChevronRight, 
-  Instagram, 
+  Film, 
   ArrowRight,
   Sparkles,
-  ShoppingBag,
-  ExternalLink 
+  ShoppingBag
 } from "lucide-react";
-import { toast } from "sonner";
+import showroomVideo from "@/assets/videos/showroom.mp4";
 
 const MOCK_REELS: DbReel[] = [
   {
     id: "mock-reel-1",
     title: "Aryansh Luxury Jewels Reel",
-    reel_url: "https://www.instagram.com/reel/DaMY5vasd_9/",
+    video_url: showroomVideo,
     thumbnail_url: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop",
     product_id: null,
     is_active: true,
@@ -33,7 +32,7 @@ const MOCK_REELS: DbReel[] = [
   {
     id: "mock-reel-2",
     title: "Traditional Heritage Gold Jhumkas",
-    reel_url: "https://www.instagram.com/reel/Cz3YvHov9y-/",
+    video_url: showroomVideo,
     thumbnail_url: "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=600&auto=format&fit=crop",
     product_id: null,
     is_active: true,
@@ -43,7 +42,7 @@ const MOCK_REELS: DbReel[] = [
   {
     id: "mock-reel-3",
     title: "Royal Antique Bangles Set",
-    reel_url: "https://www.instagram.com/reel/C89o2o2x123/",
+    video_url: showroomVideo,
     thumbnail_url: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&auto=format&fit=crop",
     product_id: null,
     is_active: true,
@@ -51,13 +50,6 @@ const MOCK_REELS: DbReel[] = [
     updated_at: new Date().toISOString()
   }
 ];
-
-function getInstagramEmbedUrl(url: string): string {
-  if (!url) return "";
-  const cleanUrl = url.split("?")[0];
-  const base = cleanUrl.endsWith("/") ? cleanUrl : `${cleanUrl}/`;
-  return `${base}embed/`;
-}
 
 export function TrendingLooks() {
   const [reels, setReels] = useState<DbReel[]>([]);
@@ -127,10 +119,9 @@ export function TrendingLooks() {
   }
 
   if (reels.length === 0) {
-    return null; // Don't render section if no active reels are configured
+    return null; 
   }
 
-  // Map database products nested under reels using mapDbProduct mapper helper
   const mappedProduct = (reel: DbReel): Product | null => {
     if (!reel.products) return null;
     try {
@@ -207,10 +198,10 @@ export function TrendingLooks() {
                       </span>
                     </div>
 
-                    {/* Reels badge indicator */}
+                    {/* Looks badge indicator */}
                     <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-charcoal/70 backdrop-blur-md px-3 py-1 text-[0.68rem] text-background font-medium tracking-wide">
-                      <Instagram size={12} />
-                      REELS
+                      <Film size={12} />
+                      LOOKS
                     </div>
                   </div>
 
@@ -235,10 +226,9 @@ export function TrendingLooks() {
         </div>
       </div>
 
-      {/* Dynamic Embed Playback Modal */}
+      {/* Dynamic Native Playback Modal */}
       {selectedReel && (() => {
         const product = mappedProduct(selectedReel);
-        const embedUrl = getInstagramEmbedUrl(selectedReel.reel_url);
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm animate-fade-in">
@@ -259,22 +249,16 @@ export function TrendingLooks() {
                 <X size={18} />
               </button>
 
-              {/* Video Frame Column (Lazy loads embed only when active) */}
-              <div className="bg-charcoal/95 flex items-center justify-center h-[480px] md:h-[650px] relative border-b md:border-b-0 md:border-r border-border">
-                {embedUrl ? (
-                  <iframe
-                    src={embedUrl}
-                    className="w-full h-full border-0 select-none"
-                    allowTransparency
-                    allow="encrypted-media"
-                    scrolling="no"
-                    title="Instagram Reel Player"
-                  />
-                ) : (
-                  <div className="text-center text-muted-foreground p-6">
-                    <p className="font-serif">Embedded player load error</p>
-                  </div>
-                )}
+              {/* Video Player Column */}
+              <div className="bg-charcoal flex items-center justify-center h-[480px] md:h-[650px] relative border-b md:border-b-0 md:border-r border-border">
+                <video
+                  src={selectedReel.video_url}
+                  autoPlay
+                  controls
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover bg-charcoal"
+                />
               </div>
 
               {/* Look Info & Checkout Cross-sell Column */}
@@ -340,19 +324,9 @@ export function TrendingLooks() {
                   )}
                 </div>
 
-                <div className="pt-6 border-t border-border mt-6 space-y-3">
-                  <a
-                    href={selectedReel.reel_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 border border-foreground hover:bg-foreground hover:text-background w-full py-3.5 eyebrow text-xs transition-all rounded-sm shadow-sm"
-                  >
-                    <Instagram size={14} />
-                    Watch on Instagram
-                    <ExternalLink size={12} />
-                  </a>
-                  <p className="text-[0.62rem] text-center text-muted-foreground">
-                    * Instagram player capabilities, sound controls and login requirements are governed by Meta platform policies.
+                <div className="pt-6 border-t border-border mt-6">
+                  <p className="text-[0.68rem] text-center text-muted-foreground italic">
+                    Exquisite jewellery styled in house. Every piece is handcrafted to redefine luxury.
                   </p>
                 </div>
               </div>
