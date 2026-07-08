@@ -22,10 +22,10 @@ function Index() {
       <Hero />
       <FeaturedCollections />
       <TrendingLooks />
-      <VisitStore />
       <PopularCategories />
       <TrendingCollection />
       <TopStyles />
+      <VisitStore />
       <BrandStoryVideo />
       <FeaturedBanners />
       <WhyUs />

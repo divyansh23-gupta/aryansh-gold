@@ -101,7 +101,7 @@ export function TrendingLooks() {
 
   if (loading) {
     return (
-      <section className="bg-cream pt-16 pb-0 md:pt-24 md:pb-0">
+      <section className="bg-cream py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-5 md:px-8 text-center">
           <SectionHeading
             eyebrow="Trending Looks"
@@ -123,7 +123,7 @@ export function TrendingLooks() {
   }
 
   return (
-    <section className="bg-cream pt-16 pb-0 md:pt-24 md:pb-0 overflow-hidden">
+    <section className="bg-cream py-16 md:py-24 overflow-hidden">
       <div className="mx-auto max-w-7xl px-5 md:px-8 relative">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-primary/10 pb-6">
           <SectionHeading
