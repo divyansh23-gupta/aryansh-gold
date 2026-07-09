@@ -1,10 +1,67 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useStore, cartLineProduct } from "@/lib/store";
 import { formatPrice } from "@/data/products";
-import { CreditCard, ShoppingBag, ArrowLeft, ShieldCheck, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { CreditCard, ShoppingBag, ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+
+// Zod Validation Schema
+const checkoutSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  phone: z.string().regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit phone number"),
+  street: z.string().min(5, "Address must be at least 5 characters"),
+  city: z.string().min(2, "City must be at least 2 characters"),
+  state: z.string().min(2, "State must be at least 2 characters"),
+  zip: z.string().regex(/^\d{6}$/, "ZIP code must be a 6-digit number"),
+  billingSameAsShipping: z.boolean().default(true),
+  billingStreet: z.string().optional(),
+  billingCity: z.string().optional(),
+  billingState: z.string().optional(),
+  billingZip: z.string().optional(),
+  notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.billingSameAsShipping) {
+    if (!data.billingStreet || data.billingStreet.trim().length < 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Billing address must be at least 5 characters",
+        path: ["billingStreet"],
+      });
+    }
+    if (!data.billingCity || data.billingCity.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Billing city must be at least 2 characters",
+        path: ["billingCity"],
+      });
+    }
+    if (!data.billingState || data.billingState.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Billing state must be at least 2 characters",
+        path: ["billingState"],
+      });
+    }
+    if (!data.billingZip || !/^\d{6}$/.test(data.billingZip)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Billing ZIP code must be 6 digits",
+        path: ["billingZip"],
+      });
+    }
+  }
+});
+
+type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -18,27 +75,141 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function CheckoutPage() {
-  const { products, cart, cartSubtotal } = useStore();
-  const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
-
-  const [shippingForm, setShippingForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    street: "",
-    city: "",
-    state: "",
-    zip: "",
-  });
-
-  const [billingForm, setBillingForm] = useState({
-    street: "",
-    city: "",
-    state: "",
-    zip: "",
-  });
+  const { products, cart, cartSubtotal, clearCart } = useStore();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
 
   const total = cartSubtotal > 0 ? cartSubtotal + 99 : 0; // Fixed shipping rate of 99
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<CheckoutFormData>({
+    resolver: zodResolver(checkoutSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      street: "",
+      city: "",
+      state: "",
+      zip: "",
+      billingSameAsShipping: true,
+      billingStreet: "",
+      billingCity: "",
+      billingState: "",
+      billingZip: "",
+      notes: "",
+    },
+  });
+
+  // Watch field to toggle billing form display dynamically
+  const billingSameAsShipping = watch("billingSameAsShipping");
+
+  // Prefill form details from user profile once authenticated
+  useEffect(() => {
+    if (user) {
+      setValue("email", user.email || "");
+    }
+    if (profile) {
+      setValue("name", profile.full_name || "");
+      if (profile.phone) {
+        setValue("phone", profile.phone || "");
+      }
+    }
+  }, [user, profile, setValue]);
+
+  const onSubmit = async (formData: CheckoutFormData) => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
+
+    try {
+      const p_cart_items = cart.map((item) => ({
+        variant_id: item.id,
+        quantity: item.quantity,
+      }));
+
+      const p_shipping_address = {
+        street: formData.street,
+        city: formData.city,
+        state: formData.state,
+        zip: formData.zip,
+      };
+
+      const p_billing_address = formData.billingSameAsShipping
+        ? null
+        : {
+            street: formData.billingStreet,
+            city: formData.billingCity,
+            state: formData.billingState,
+            zip: formData.billingZip,
+          };
+
+      // Call transactional place_order RPC in Supabase
+      const { data, error } = await supabase.rpc("place_order", {
+        p_user_id: user?.id || null,
+        p_customer_name: formData.name,
+        p_customer_email: formData.email,
+        p_customer_phone: formData.phone,
+        p_shipping_address,
+        p_billing_address,
+        p_notes: formData.notes || null,
+        p_cart_items,
+      });
+
+      if (error) {
+        // Intercept out of stock or custom exception messages
+        if (error.message && error.message.toLowerCase().includes("stock")) {
+          toast.error(error.message, { duration: 6000 });
+        } else {
+          toast.error(error.message || "Failed to place order. Please try again.");
+        }
+        return;
+      }
+
+      // Success: Save order details in session storage for guest validation
+      const lastOrderDetails = {
+        orderNumber: data.order_number,
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone || undefined,
+        shippingAddress: p_shipping_address,
+        subtotal: cartSubtotal,
+        shippingCost: 99,
+        totalAmount: total,
+        items: cart.map((line) => {
+          const p = cartLineProduct(line, products);
+          return {
+            name: p?.name || "Unknown Product",
+            qty: line.quantity,
+            price: p?.price || 0,
+            image: p?.image || "/src/assets/showroom.jpg",
+          };
+        }),
+      };
+
+      sessionStorage.setItem("aryansh_last_order", JSON.stringify(lastOrderDetails));
+
+      // Clear cart locally and in database
+      await clearCart();
+
+      toast.success("Order placed successfully!");
+
+      // Redirect to confirmation page
+      navigate({
+        to: "/order-confirmation",
+        search: { orderNumber: data.order_number },
+      });
+    } catch (err: any) {
+      console.error("Checkout submission error:", err);
+      toast.error("An unexpected error occurred. Please try again.");
+    }
+  };
 
   if (cart.length === 0) {
     return (
@@ -71,24 +242,15 @@ function CheckoutPage() {
           Return to shopping bag
         </Link>
 
-        {/* Milestone 10 Notice Banner */}
-        <div className="flex items-start gap-3 p-4 mb-6 rounded-sm border border-amber-200/60 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 text-xs">
-          <AlertCircle size={16} className="shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold uppercase tracking-wider">Checkout Placeholder</p>
-            <p className="mt-1">Checkout Foundation will be implemented in Milestone 10. Actual payment processing and database checkout flows are currently disabled.</p>
-          </div>
-        </div>
-
         <h1 className="display-serif text-3xl text-foreground border-b border-border pb-4 mb-8">
           Checkout Information
         </h1>
 
-        <div className="grid gap-8 lg:grid-cols-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-8 lg:grid-cols-5">
           {/* Checkout Info Forms */}
           <div className="lg:col-span-3 space-y-6">
             {/* Shipping Card */}
-            <div className="bg-background border border-border p-6 rounded-sm space-y-4">
+            <div className="bg-background border border-border p-6 rounded-sm space-y-4 shadow-sm">
               <h2 className="font-serif text-lg text-foreground flex items-center gap-2 border-b border-border pb-3">
                 <CreditCard className="text-primary" size={18} />
                 Shipping Details
@@ -97,96 +259,112 @@ function CheckoutPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase">Full Name *</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Full Name *</label>
                     <Input
-                      disabled
                       placeholder="e.g. Divyansh Gupta"
-                      value={shippingForm.name}
-                      onChange={(e) => setShippingForm({ ...shippingForm, name: e.target.value })}
-                      className="mt-1 border-border"
+                      {...register("name")}
+                      className={`mt-1 border-border ${errors.name ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {errors.name && (
+                      <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>
+                    )}
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase">Phone Number</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phone Number *</label>
                     <Input
-                      disabled
-                      placeholder="e.g. +91 98765 43210"
-                      value={shippingForm.phone}
-                      onChange={(e) => setShippingForm({ ...shippingForm, phone: e.target.value })}
-                      className="mt-1 border-border"
+                      placeholder="e.g. 9876543210"
+                      {...register("phone")}
+                      className={`mt-1 border-border ${errors.phone ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {errors.phone && (
+                      <p className="mt-1 text-xs text-destructive">{errors.phone.message}</p>
+                    )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase">Email Address *</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email Address *</label>
                   <Input
-                    disabled
                     type="email"
                     placeholder="e.g. name@example.com"
-                    value={shippingForm.email}
-                    onChange={(e) => setShippingForm({ ...shippingForm, email: e.target.value })}
-                    className="mt-1 border-border"
+                    {...register("email")}
+                    className={`mt-1 border-border ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
+                  {errors.email && (
+                    <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase">Street Address *</label>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Street Address *</label>
                   <Input
-                    disabled
                     placeholder="e.g. Apartment, suite, unit, building, street"
-                    value={shippingForm.street}
-                    onChange={(e) => setShippingForm({ ...shippingForm, street: e.target.value })}
-                    className="mt-1 border-border"
+                    {...register("street")}
+                    className={`mt-1 border-border ${errors.street ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
+                  {errors.street && (
+                    <p className="mt-1 text-xs text-destructive">{errors.street.message}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-1">
-                    <label className="text-xs font-medium text-muted-foreground uppercase">City *</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">City *</label>
                     <Input
-                      disabled
                       placeholder="City"
-                      value={shippingForm.city}
-                      onChange={(e) => setShippingForm({ ...shippingForm, city: e.target.value })}
-                      className="mt-1 border-border"
+                      {...register("city")}
+                      className={`mt-1 border-border ${errors.city ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {errors.city && (
+                      <p className="mt-1 text-xs text-destructive">{errors.city.message}</p>
+                    )}
                   </div>
                   <div className="col-span-1">
-                    <label className="text-xs font-medium text-muted-foreground uppercase">State *</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">State *</label>
                     <Input
-                      disabled
                       placeholder="State"
-                      value={shippingForm.state}
-                      onChange={(e) => setShippingForm({ ...shippingForm, state: e.target.value })}
-                      className="mt-1 border-border"
+                      {...register("state")}
+                      className={`mt-1 border-border ${errors.state ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {errors.state && (
+                      <p className="mt-1 text-xs text-destructive">{errors.state.message}</p>
+                    )}
                   </div>
                   <div className="col-span-1">
-                    <label className="text-xs font-medium text-muted-foreground uppercase">ZIP Code *</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">ZIP Code *</label>
                     <Input
-                      disabled
-                      placeholder="ZIP Code"
-                      value={shippingForm.zip}
-                      onChange={(e) => setShippingForm({ ...shippingForm, zip: e.target.value })}
-                      className="mt-1 border-border"
+                      placeholder="6 digits"
+                      {...register("zip")}
+                      className={`mt-1 border-border ${errors.zip ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {errors.zip && (
+                      <p className="mt-1 text-xs text-destructive">{errors.zip.message}</p>
+                    )}
                   </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Order Notes (Optional)</label>
+                  <Textarea
+                    placeholder="e.g. Special instructions for delivery, landmark, etc."
+                    {...register("notes")}
+                    className="mt-1 border-border resize-none"
+                    rows={3}
+                  />
                 </div>
               </div>
             </div>
 
             {/* Billing Card */}
-            <div className="bg-background border border-border p-6 rounded-sm space-y-4">
+            <div className="bg-background border border-border p-6 rounded-sm space-y-4 shadow-sm">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h2 className="font-serif text-lg text-foreground flex items-center gap-2">
                   Billing Details
                 </h2>
-                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={billingSameAsShipping}
-                    onChange={(e) => setBillingSameAsShipping(e.target.checked)}
+                    {...register("billingSameAsShipping")}
                     className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
                   />
                   Same as shipping details
@@ -196,46 +374,50 @@ function CheckoutPage() {
               {!billingSameAsShipping && (
                 <div className="space-y-4 pt-2">
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase">Street Address *</label>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Street Address *</label>
                     <Input
-                      disabled
                       placeholder="e.g. Street, suite, unit"
-                      value={billingForm.street}
-                      onChange={(e) => setBillingForm({ ...billingForm, street: e.target.value })}
-                      className="mt-1 border-border"
+                      {...register("billingStreet")}
+                      className={`mt-1 border-border ${errors.billingStreet ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     />
+                    {errors.billingStreet && (
+                      <p className="mt-1 text-xs text-destructive">{errors.billingStreet.message}</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-1">
-                      <label className="text-xs font-medium text-muted-foreground uppercase">City *</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">City *</label>
                       <Input
-                        disabled
                         placeholder="City"
-                        value={billingForm.city}
-                        onChange={(e) => setBillingForm({ ...billingForm, city: e.target.value })}
-                        className="mt-1 border-border"
+                        {...register("billingCity")}
+                        className={`mt-1 border-border ${errors.billingCity ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       />
+                      {errors.billingCity && (
+                        <p className="mt-1 text-xs text-destructive">{errors.billingCity.message}</p>
+                      )}
                     </div>
                     <div className="col-span-1">
-                      <label className="text-xs font-medium text-muted-foreground uppercase">State *</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">State *</label>
                       <Input
-                        disabled
                         placeholder="State"
-                        value={billingForm.state}
-                        onChange={(e) => setBillingForm({ ...billingForm, state: e.target.value })}
-                        className="mt-1 border-border"
+                        {...register("billingState")}
+                        className={`mt-1 border-border ${errors.billingState ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       />
+                      {errors.billingState && (
+                        <p className="mt-1 text-xs text-destructive">{errors.billingState.message}</p>
+                      )}
                     </div>
                     <div className="col-span-1">
-                      <label className="text-xs font-medium text-muted-foreground uppercase">ZIP Code *</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">ZIP Code *</label>
                       <Input
-                        disabled
                         placeholder="ZIP Code"
-                        value={billingForm.zip}
-                        onChange={(e) => setBillingForm({ ...billingForm, zip: e.target.value })}
-                        className="mt-1 border-border"
+                        {...register("billingZip")}
+                        className={`mt-1 border-border ${errors.billingZip ? "border-destructive focus-visible:ring-destructive" : ""}`}
                       />
+                      {errors.billingZip && (
+                        <p className="mt-1 text-xs text-destructive">{errors.billingZip.message}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -245,9 +427,9 @@ function CheckoutPage() {
 
           {/* Cart summary */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-background border border-border p-6 rounded-sm space-y-6">
+            <div className="bg-background border border-border p-6 rounded-sm space-y-6 shadow-sm">
               <h2 className="font-serif text-lg text-foreground flex items-center gap-2 border-b border-border pb-3">
-                Order Items
+                Order Summary
               </h2>
 
               <div className="divide-y divide-border/60 max-h-60 overflow-y-auto pr-2">
@@ -256,7 +438,7 @@ function CheckoutPage() {
                   if (!p) return null;
                   return (
                     <div key={line.id} className="flex gap-3 py-3 text-xs">
-                      <img src={p.image} alt={p.name} className="h-14 w-12 object-cover rounded-sm" />
+                      <img src={p.image} alt={p.name} className="h-14 w-12 object-cover rounded-sm border border-border/40" />
                       <div className="min-w-0 flex-1">
                         <p className="font-serif text-sm font-medium truncate text-foreground">{p.name}</p>
                         <p className="text-muted-foreground mt-0.5">Qty: {line.quantity} × {formatPrice(p.price)}</p>
@@ -283,18 +465,29 @@ function CheckoutPage() {
               </div>
 
               <div className="pt-2">
-                <Button disabled className="w-full py-4 text-xs font-bold uppercase tracking-wider cursor-not-allowed">
-                  Checkout Coming Soon
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} />
+                      Placing Order...
+                    </>
+                  ) : (
+                    "Place Order"
+                  )}
                 </Button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 p-4 bg-background border border-border/80 text-[10px] text-muted-foreground rounded-sm">
+            <div className="flex items-center gap-2.5 p-4 bg-background border border-border/80 text-[10px] text-muted-foreground rounded-sm shadow-sm">
               <ShieldCheck className="text-primary shrink-0" size={16} />
-              <p>Your connection is secure. All order details are previewed in temporary client session memory.</p>
+              <p>Your connection is secure. We use automated transaction systems with secure real-time stock allocation.</p>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
