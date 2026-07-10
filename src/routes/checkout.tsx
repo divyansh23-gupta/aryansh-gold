@@ -139,6 +139,11 @@ function CheckoutPage() {
   }, [user, profile, setValue]);
 
   const onSubmit = async (formData: CheckoutFormData) => {
+    if (import.meta.env.VITE_CATALOG_MODE === "true") {
+      toast.warning("Online checkout is temporarily disabled in Catalog Mode.");
+      return;
+    }
+
     if (cart.length === 0) {
       toast.error("Your cart is empty");
       return;
@@ -553,10 +558,21 @@ function CheckoutPage() {
                 </div>
               </div>
 
+              {import.meta.env.VITE_CATALOG_MODE === "true" && (
+                <div className="p-5 mb-4 rounded-sm border border-primary/25 bg-cream/40 text-center text-xs shadow-sm">
+                  <p className="font-serif font-bold text-primary uppercase tracking-wider text-[10px]">Catalog Showcase Mode</p>
+                  <p className="mt-2 text-foreground/80 font-light leading-relaxed">
+                    Online ordering will be available shortly.
+                    <br />
+                    Browse our collections or visit our showroom.
+                  </p>
+                </div>
+              )}
+
               <div className="pt-2">
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !razorpayScriptLoaded}
+                  disabled={isSubmitting || !razorpayScriptLoaded || import.meta.env.VITE_CATALOG_MODE === "true"}
                   className="w-full py-4 text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
@@ -564,6 +580,8 @@ function CheckoutPage() {
                       <Loader2 className="animate-spin" size={16} />
                       Initiating Payment...
                     </>
+                  ) : import.meta.env.VITE_CATALOG_MODE === "true" ? (
+                    "Checkout Disabled"
                   ) : (
                     "Pay Securely via Razorpay"
                   )}
