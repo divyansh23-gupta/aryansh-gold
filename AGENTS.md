@@ -8,3 +8,9 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+# Repository and Database Workflow Rules
+- Use the `main` branch as the default working branch.
+- Commit and push changes directly to `main` (do not create feature branches or pull requests unless explicitly requested, major architectural refactors, or high-risk changes requiring isolation).
+- Before any database migration: show the SQL first, wait for user approval, then proceed.
+
