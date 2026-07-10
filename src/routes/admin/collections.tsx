@@ -16,6 +16,7 @@ import {
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import bridalFallback from "@/assets/collection-bridal.jpg";
 
 export const Route = createFileRoute("/admin/collections")({
   component: AdminCollections,
@@ -101,7 +102,7 @@ function AdminCollections() {
       toast.success("Collection cover photo uploaded!");
     } catch (err: any) {
       console.warn("Storage upload failed, fallback to mock asset:", err);
-      setImageUrl(`/src/assets/collection-bridal.jpg`);
+      setImageUrl(bridalFallback);
       toast.success("Using fallback asset.");
     } finally {
       setUploadingImage(false);
@@ -451,7 +452,7 @@ function AdminCollections() {
           <div key={col.id} className="overflow-hidden rounded-sm border border-border bg-background shadow-sm flex flex-col justify-between">
             <div className="aspect-[16/9] w-full bg-cream relative overflow-hidden border-b border-border/60">
               <img
-                src={col.image_url || "/src/assets/collection-bridal.jpg"}
+                src={col.image_url || bridalFallback}
                 alt={col.title}
                 className="h-full w-full object-cover"
               />

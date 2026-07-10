@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import necklacesFallback from "@/assets/collection-necklaces.jpg";
 
 export const Route = createFileRoute("/admin/categories")({
   component: AdminCategories,
@@ -100,7 +101,7 @@ function AdminCategories() {
       toast.success("Category cover photo uploaded!");
     } catch (err: any) {
       console.warn("Storage upload failed, fallback to mock path:", err);
-      setImageUrl(`/src/assets/collection-necklaces.jpg`);
+      setImageUrl(necklacesFallback);
       toast.success("Using fallback asset.");
     } finally {
       setUploadingImage(false);
@@ -336,7 +337,7 @@ function AdminCategories() {
           <div key={cat.id} className="overflow-hidden rounded-sm border border-border bg-background shadow-sm flex flex-col justify-between">
             <div className="aspect-[16/9] w-full bg-cream relative overflow-hidden border-b border-border/60">
               <img
-                src={cat.image_url || "/src/assets/collection-necklaces.jpg"}
+                src={cat.image_url || necklacesFallback}
                 alt={cat.name}
                 className="h-full w-full object-cover"
               />

@@ -23,6 +23,7 @@ import {
   Truck
 } from "lucide-react";
 import { toast } from "sonner";
+import showroomFallback from "@/assets/showroom.jpg";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/account")({
@@ -116,7 +117,7 @@ function AccountPage() {
                 name: item.product_name_snapshot,
                 qty: item.quantity,
                 price: Number(item.unit_price),
-                image: p?.image || "/src/assets/showroom.jpg",
+                image: p?.image || showroomFallback,
               };
             }),
           }));

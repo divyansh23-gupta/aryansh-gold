@@ -16,6 +16,19 @@ import { toast } from "sonner";
 import { type VariantStatus } from "@/lib/database.types";
 
 import { cn } from "@/lib/utils";
+import product1Fallback from "@/assets/product-1.jpg";
+import product2Fallback from "@/assets/product-2.jpg";
+import product3Fallback from "@/assets/product-3.jpg";
+import product4Fallback from "@/assets/product-4.jpg";
+import product5Fallback from "@/assets/product-5.jpg";
+
+const productFallbacks = [
+  product1Fallback,
+  product2Fallback,
+  product3Fallback,
+  product4Fallback,
+  product5Fallback,
+];
 
 export const Route = createFileRoute("/admin/products/new")({
   component: AdminProductsNew,
@@ -141,7 +154,7 @@ function AdminProductsNew() {
     } catch (err: any) {
       console.warn("Storage upload failed, falling back to mock assets path:", err);
       // Fallback fallback path simulation
-      const fallbackPath = `/src/assets/product-${Math.floor(Math.random() * 5) + 1}.jpg`;
+      const fallbackPath = productFallbacks[Math.floor(Math.random() * productFallbacks.length)];
       if (isCover) {
         setCoverUrl(fallbackPath);
       } else {

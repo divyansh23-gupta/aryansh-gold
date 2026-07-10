@@ -11,6 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import logoMark from "@/assets/aryansh-logo-mark.png";
+import showroomFallback from "@/assets/showroom.jpg";
 
 // Zod Validation Schema
 const checkoutSchema = z.object({
@@ -201,7 +203,7 @@ function CheckoutPage() {
         currency: currency,
         name: "Aryansh Gold",
         description: "Secure Jewellery Checkout",
-        image: "/src/assets/aryansh-logo-mark.png",
+        image: logoMark,
         order_id: razorpay_order_id,
         handler: async function (response: any) {
           const toastId = toast.loading("Verifying payment transaction...");
@@ -255,7 +257,7 @@ function CheckoutPage() {
                   name: p?.name || "Unknown Product",
                   qty: line.quantity,
                   price: p?.price || 0,
-                  image: p?.image || "/src/assets/showroom.jpg",
+                  image: p?.image || showroomFallback,
                 };
               }),
             };

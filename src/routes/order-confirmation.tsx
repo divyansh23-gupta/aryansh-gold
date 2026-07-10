@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice } from "@/data/products";
 import { CheckCircle, ShoppingBag, ArrowRight, Calendar, MapPin, Phone, Mail, FileText, Loader2 } from "lucide-react";
+import showroomFallback from "@/assets/showroom.jpg";
 import { Reveal } from "@/components/ui-custom/Reveal";
 
 export const Route = createFileRoute("/order-confirmation")({
@@ -115,7 +116,7 @@ function OrderConfirmationPage() {
                 name: item.product_name_snapshot,
                 qty: item.quantity,
                 price: Number(item.unit_price),
-                image: imgMap.get(item.product_id) || "/src/assets/showroom.jpg",
+                image: imgMap.get(item.product_id) || showroomFallback,
               })),
             };
 

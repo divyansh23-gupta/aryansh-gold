@@ -11,6 +11,7 @@ import { featuredCollections as staticCollections, popularCategories as staticPo
 import { mapDbProduct, mapDbCollection } from "@/lib/database.types";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import necklacesFallback from "@/assets/collection-necklaces.jpg";
 
 export interface CartLine {
   id: string;
@@ -107,7 +108,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setCategoriesList(catData.map((c) => c.name));
         setPopularCategoriesList(catData.map((c) => ({
           name: c.name,
-          image: c.image_url || "/src/assets/collection-necklaces.jpg"
+          image: c.image_url || necklacesFallback
         })));
       } else {
         setCategoriesList(staticCategories);
