@@ -14,6 +14,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import ringsFallback from "@/assets/collection-rings.jpg";
 
 export const Route = createFileRoute("/admin/inventory")({
   component: AdminInventory,
@@ -362,7 +363,7 @@ function AdminInventory() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={v.imageUrl || "/src/assets/collection-rings.jpg"}
+                          src={v.imageUrl || ringsFallback}
                           alt={v.productName}
                           className="h-10 w-9 object-cover rounded-sm border border-border bg-cream"
                         />

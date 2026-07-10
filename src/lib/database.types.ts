@@ -1,5 +1,6 @@
 import { type Product, type Category } from "@/data/products";
 import { type FeaturedCollection } from "@/data/collections";
+import bridalFallback from "@/assets/collection-bridal.jpg";
 
 export type AdminRole = "super_admin" | "admin";
 export type InviteStatus = "pending" | "accepted" | "expired" | "revoked";
@@ -122,7 +123,7 @@ export interface DbCartItem {
 export const mapDbCollection = (row: any): FeaturedCollection => ({
   title: row.title,
   subtitle: row.subtitle || "",
-  image: row.image_url || "/src/assets/collection-bridal.jpg",
+  image: row.image_url || bridalFallback,
 });
 
 export const mapDbProduct = (row: any): Product => {
