@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "";
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const supabaseServer = createClient(
+  supabaseUrl || "https://placeholder-url.supabase.co",
+  serviceRoleKey || "placeholder-key"
+);
 
 export const Route = createFileRoute("/api/create-payment-order")({
   server: {
@@ -18,7 +26,7 @@ export const Route = createFileRoute("/api/create-payment-order")({
 
           // 1. Verify variant stock and compute totals from Database
           const variantIds = cartItems.map((item: any) => item.variant_id);
-          const { data: dbVariants, error: variantErr } = await supabase
+          const { data: dbVariants, error: variantErr } = await supabaseServer
             .from("product_variants")
             .select("id, stock_quantity, price, status")
             .in("id", variantIds);
@@ -102,7 +110,7 @@ export const Route = createFileRoute("/api/create-payment-order")({
           const rpOrder = await rpRes.json();
 
           // 3. Save order details inside order_drafts table
-          const { error: draftErr } = await supabase
+          const { error: draftErr } = await supabaseServer
             .from("order_drafts")
             .insert({
               user_id: userId || null,
