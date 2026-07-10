@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "";
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const supabaseServer = createClient(
+  supabaseUrl || "https://placeholder-url.supabase.co",
+  serviceRoleKey || "placeholder-key"
+);
 
 export const Route = createFileRoute("/api/verify-payment")({
   server: {
@@ -34,7 +42,7 @@ export const Route = createFileRoute("/api/verify-payment")({
 
           if (generatedSignature !== razorpay_signature) {
             // Update draft to failed if verification fails
-            await supabase
+            await supabaseServer
               .from("order_drafts")
               .update({ status: "failed", payment_status: "failed" })
               .eq("razorpay_order_id", razorpay_order_id);
@@ -46,7 +54,7 @@ export const Route = createFileRoute("/api/verify-payment")({
           }
 
           // 2. Call verify_and_create_order database transaction RPC
-          const { data, error: rpcErr } = await supabase.rpc("verify_and_create_order", {
+          const { data, error: rpcErr } = await supabaseServer.rpc("verify_and_create_order", {
             p_razorpay_order_id: razorpay_order_id,
             p_razorpay_payment_id: razorpay_payment_id,
             p_razorpay_signature: razorpay_signature
