@@ -13,7 +13,7 @@ export function BrandStoryVideo() {
 
   return (
     <section 
-      className="relative h-[88vh] min-h-[560px] w-full overflow-hidden"
+      className="relative w-full overflow-hidden h-[250px] sm:h-[350px] md:h-[500px]"
       style={{ backgroundColor: "var(--charcoal)" }}
     >
       <img
@@ -23,7 +23,7 @@ export function BrandStoryVideo() {
         loading="lazy"
         width={1920}
         height={1080}
-        className="h-full w-full scale-105 object-cover opacity-0 transition-opacity duration-700 [&.is-loaded]:opacity-100"
+        className="w-full h-full object-cover opacity-0 transition-opacity duration-700 [&.is-loaded]:opacity-100"
         onLoad={(e) => e.currentTarget.classList.add("is-loaded")}
       />
       <div 
