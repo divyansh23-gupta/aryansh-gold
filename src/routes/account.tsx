@@ -23,6 +23,7 @@ import {
   Truck
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/account")({
   validateSearch: (search: Record<string, unknown>): { tab?: string } => {
@@ -51,8 +52,6 @@ interface Address {
   isDefault: boolean;
 }
 
-// Active user orders (empty state for Phase 1)
-const orders: any[] = [];
 
 function AccountPage() {
   const { user, profile, logout, updateProfile, loading: authLoading } = useAuth();
@@ -78,6 +77,61 @@ function AccountPage() {
     navigate({ search: { tab: newTab } });
   };
 
+
+  // Orders state & fetch
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setOrdersLoading(false);
+      return;
+    }
+
+    const fetchUserOrders = async () => {
+      setOrdersLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*, order_items(*)")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (data) {
+          const mappedOrders = data.map((o: any) => ({
+            id: o.order_number,
+            rawId: o.id,
+            date: new Date(o.created_at).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }),
+            status: o.status.charAt(0).toUpperCase() + o.status.slice(1),
+            total: Number(o.total_amount),
+            items: o.order_items.map((item: any) => {
+              const p = products.find((prod) => prod.id === item.product_id);
+              return {
+                name: item.product_name_snapshot,
+                qty: item.quantity,
+                price: Number(item.unit_price),
+                image: p?.image || "/src/assets/showroom.jpg",
+              };
+            }),
+          }));
+          setOrders(mappedOrders);
+        }
+      } catch (err) {
+        console.error("Error fetching customer orders:", err);
+        toast.error("Failed to load your order history.");
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchUserOrders();
+  }, [user, products]);
 
   // Profile Form States
   const [fullName, setFullName] = useState("");
@@ -371,8 +425,11 @@ function AccountPage() {
                   <h2 className="font-serif text-2xl text-foreground">My Orders</h2>
                   <p className="text-xs text-muted-foreground mt-1">Track current shipments and view order history.</p>
                 </div>
-                
-                {orders.length > 0 ? (
+                {ordersLoading ? (
+                  <div className="flex h-40 items-center justify-center">
+                    <Loader2 className="animate-spin text-primary" size={24} />
+                  </div>
+                ) : orders.length > 0 ? (
                   <div className="pt-4 space-y-6">
                     {orders.map((order) => (
                       <div key={order.id} className="border border-border/70 rounded-sm bg-cream/10 p-5 space-y-4">

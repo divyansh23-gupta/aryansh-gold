@@ -31,45 +31,156 @@ function AdminOrderDetail() {
   const [history, setHistory] = useState<DbOrderStatusHistory[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({}); // Maps user_id -> name/email
   const [loading, setLoading] = useState(true);
+  const [isDraft, setIsDraft] = useState(false);
   
   // Transition Form States
   const [updating, setUpdating] = useState(false);
   const [transitionNote, setTransitionNote] = useState("");
   const [selectedNewStatus, setSelectedNewStatus] = useState<OrderStatus | null>(null);
 
+  const handleForceConfirm = async () => {
+    setUpdating(true);
+    try {
+      const { data, error } = await supabase.rpc("force_confirm_draft", {
+        p_draft_id: id,
+        p_admin_id: currentUser?.id
+      });
+
+      if (error) throw error;
+
+      toast.success("Order draft confirmed and created successfully!");
+      navigate({ to: "/admin/orders" });
+    } catch (err: any) {
+      console.error("Force confirm draft error:", err);
+      toast.error(err.message || "Failed to force confirm order draft");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCancelConflict = async () => {
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("order_drafts")
+        .update({
+          status: "cancelled",
+          payment_status: "refunded"
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Draft transaction cancelled and flagged for refund.");
+      navigate({ to: "/admin/orders" });
+    } catch (err: any) {
+      console.error("Cancel draft error:", err);
+      toast.error("Failed to cancel draft transaction");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const fetchOrderData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Order
+      // 1. Fetch standard Order
       const { data: orderData, error: orderErr } = await supabase
         .from("orders")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (orderErr) throw orderErr;
-      setOrder(orderData);
 
-      // 2. Fetch Items
-      const { data: itemsData, error: itemsErr } = await supabase
-        .from("order_items")
-        .select("*")
-        .eq("order_id", id);
+      if (orderData) {
+        setOrder(orderData);
+        setIsDraft(false);
 
-      if (itemsErr) throw itemsErr;
-      setItems(itemsData || []);
+        // 2. Fetch Items
+        const { data: itemsData, error: itemsErr } = await supabase
+          .from("order_items")
+          .select("*")
+          .eq("order_id", id);
 
-      // 3. Fetch History
-      const { data: historyData, error: historyErr } = await supabase
-        .from("order_status_history")
-        .select("*")
-        .eq("order_id", id)
-        .order("created_at", { ascending: false });
+        if (itemsErr) throw itemsErr;
+        setItems(itemsData || []);
 
-      if (historyErr) throw historyErr;
-      setHistory(historyData || []);
+        // 3. Fetch History
+        const { data: historyData, error: historyErr } = await supabase
+          .from("order_status_history")
+          .select("*")
+          .eq("order_id", id)
+          .order("created_at", { ascending: false });
 
-      // 4. Fetch profiles to resolve changed_by admins
+        if (historyErr) throw historyErr;
+        setHistory(historyData || []);
+      } else {
+        // Query order drafts
+        const { data: draftData, error: draftErr } = await supabase
+          .from("order_drafts")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (draftErr || !draftData) {
+          throw new Error("Order or Draft not found");
+        }
+
+        setIsDraft(true);
+
+        const mappedOrder: DbOrder = {
+          id: draftData.id,
+          order_number: `DRAFT: ${draftData.razorpay_order_id.slice(-8).toUpperCase()}`,
+          user_id: draftData.user_id,
+          customer_name: draftData.customer_name,
+          customer_email: draftData.customer_email,
+          customer_phone: draftData.customer_phone || "",
+          shipping_address: draftData.shipping_address,
+          billing_address: draftData.billing_address || {},
+          subtotal: Number(draftData.subtotal),
+          shipping_cost: Number(draftData.shipping_cost),
+          tax_amount: 0,
+          discount_amount: 0,
+          total_amount: Number(draftData.total_amount),
+          status: draftData.status as any,
+          notes: draftData.notes || "",
+          created_at: draftData.created_at,
+          updated_at: draftData.updated_at
+        };
+
+        setOrder(mappedOrder);
+
+        const variantIds = draftData.cart_items.map((i: any) => i.variant_id);
+        const { data: dbVariants } = await supabase
+          .from("product_variants")
+          .select("id, sku, price, product_id, products(name)")
+          .in("id", variantIds);
+
+        const variantMap = new Map(dbVariants?.map(v => [v.id, v]) || []);
+        
+        const mappedItems: DbOrderItem[] = draftData.cart_items.map((item: any, idx: number) => {
+          const v = variantMap.get(item.variant_id);
+          const pName = v?.products ? (v.products as any).name : "Unknown Product";
+          return {
+            id: `draft-item-${idx}`,
+            order_id: draftData.id,
+            product_id: v?.product_id || "",
+            variant_id: item.variant_id,
+            product_name_snapshot: pName,
+            sku_snapshot: v?.sku || "SKU-UNKNOWN",
+            unit_price: Number(v?.price || 0),
+            quantity: item.quantity,
+            total_price: Number(v?.price || 0) * item.quantity,
+            created_at: draftData.created_at
+          };
+        });
+
+        setItems(mappedItems);
+        setHistory([]);
+      }
+
+      // Fetch profiles to resolve changed_by admins
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, full_name, email");
@@ -313,71 +424,113 @@ function AdminOrderDetail() {
         {/* Right Column - Status updates, Customer credentials, Address details, Timeline */}
         <div className="space-y-6">
           {/* Status Controls */}
-          {transitions.length > 0 ? (
+          {!isDraft ? (
+            transitions.length > 0 ? (
+              <div className="p-6 rounded-sm border border-border bg-background shadow-sm space-y-4">
+                <h2 className="font-serif text-sm font-semibold text-foreground uppercase tracking-wider border-b border-border pb-2">
+                  Fulfillment Actions
+                </h2>
+
+                {selectedNewStatus ? (
+                  <div className="space-y-3 p-3 rounded-sm border border-border/80 bg-muted/10">
+                    <p className="text-xs text-foreground font-semibold uppercase">
+                      Transition to: <span className="text-primary">{selectedNewStatus}</span>
+                    </p>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] text-muted-foreground uppercase font-medium">Internal Notes (Optional)</label>
+                      <Input
+                        placeholder="e.g. Package tracking number..."
+                        value={transitionNote}
+                        onChange={(e) => setTransitionNote(e.target.value)}
+                        className="h-8 text-xs border-border bg-background"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        className="flex-1 text-xs h-7"
+                        onClick={() => handleStatusTransition(selectedNewStatus)}
+                        disabled={updating}
+                      >
+                        {updating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                        Confirm Update
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => {
+                          setSelectedNewStatus(null);
+                          setTransitionNote("");
+                        }}
+                        disabled={updating}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {transitions.map((status) => (
+                      <Button
+                        key={status}
+                        variant={status === "cancelled" ? "destructive" : "outline"}
+                        size="sm"
+                        className="w-full text-xs font-semibold justify-between h-9 uppercase tracking-wider cursor-pointer"
+                        onClick={() => setSelectedNewStatus(status)}
+                      >
+                        Move status to {status}
+                        <ChevronRight size={14} />
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 rounded-sm border border-border bg-background shadow-sm flex items-center gap-2 border-l-4 border-l-emerald-500 text-xs">
+                <CheckCircle2 className="text-emerald-500 shrink-0" size={16} />
+                <p className="text-muted-foreground">Order processing timeline concluded. No status modifications available.</p>
+              </div>
+            )
+          ) : (
             <div className="p-6 rounded-sm border border-border bg-background shadow-sm space-y-4">
               <h2 className="font-serif text-sm font-semibold text-foreground uppercase tracking-wider border-b border-border pb-2">
-                Fulfillment Actions
+                Draft Resolution Actions
               </h2>
-
-              {selectedNewStatus ? (
-                <div className="space-y-3 p-3 rounded-sm border border-border/80 bg-muted/10">
-                  <p className="text-xs text-foreground font-semibold uppercase">
-                    Transition to: <span className="text-primary">{selectedNewStatus}</span>
-                  </p>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] text-muted-foreground uppercase font-medium">Internal Notes (Optional)</label>
-                    <Input
-                      placeholder="e.g. Package tracking number..."
-                      value={transitionNote}
-                      onChange={(e) => setTransitionNote(e.target.value)}
-                      className="h-8 text-xs border-border bg-background"
-                    />
+              {((order.status as string) === "inventory_conflict") ? (
+                <div className="space-y-4">
+                  <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200/50 rounded-sm text-xs text-red-700 dark:text-red-400 space-y-1.5">
+                    <p className="font-bold flex items-center gap-1">
+                      <ShieldAlert size={14} className="shrink-0" />
+                      Inventory Conflict Detected
+                    </p>
+                    <p>This order payment has been authorized, but stock was depleted before creation. Resolve manually below.</p>
                   </div>
-                  <div className="flex gap-2 pt-1">
+                  <div className="grid grid-cols-1 gap-2.5">
                     <Button
-                      size="sm"
-                      className="flex-1 text-xs h-7"
-                      onClick={() => handleStatusTransition(selectedNewStatus)}
+                      onClick={handleForceConfirm}
                       disabled={updating}
+                      className="w-full text-xs font-bold uppercase tracking-wider h-10 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      {updating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                      Confirm Update
+                      {updating ? <Loader2 size={14} className="animate-spin" /> : null}
+                      Force Confirm Order
                     </Button>
                     <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-7"
-                      onClick={() => {
-                        setSelectedNewStatus(null);
-                        setTransitionNote("");
-                      }}
+                      onClick={handleCancelConflict}
+                      variant="destructive"
                       disabled={updating}
+                      className="w-full text-xs font-bold uppercase tracking-wider h-10 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      Cancel
+                      {updating ? <Loader2 size={14} className="animate-spin" /> : null}
+                      Log Refund & Cancel
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-2">
-                  {transitions.map((status) => (
-                    <Button
-                      key={status}
-                      variant={status === "cancelled" ? "destructive" : "outline"}
-                      size="sm"
-                      className="w-full text-xs font-semibold justify-between h-9 uppercase tracking-wider cursor-pointer"
-                      onClick={() => setSelectedNewStatus(status)}
-                    >
-                      Move status to {status}
-                      <ChevronRight size={14} />
-                    </Button>
-                  ))}
+                <div className="text-xs text-muted-foreground p-3 bg-muted/10 border border-border rounded-sm">
+                  This transaction is in draft state ({order.status}). Payment verification is pending or failed.
                 </div>
               )}
-            </div>
-          ) : (
-            <div className="p-4 rounded-sm border border-border bg-background shadow-sm flex items-center gap-2 border-l-4 border-l-emerald-500 text-xs">
-              <CheckCircle2 className="text-emerald-500 shrink-0" size={16} />
-              <p className="text-muted-foreground">Order processing timeline concluded. No status modifications available.</p>
             </div>
           )}
 

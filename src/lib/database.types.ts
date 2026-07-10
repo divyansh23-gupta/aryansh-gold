@@ -228,3 +228,14 @@ export interface DbOrderStatusHistory {
   created_at: string;
 }
 
+export interface DbReel {
+  id: string;
+  title: string | null;
+  thumbnail_url: string;
+  instagram_url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+

@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
+import hero4 from "@/assets/hero-4.jpg";
 
 
 interface Slide {
@@ -32,6 +33,12 @@ const slides: Slide[] = [
     title: "Crafted For Modern Women",
     subtitle: "Luxury pieces that tell your story.",
     cta: "View Collection",
+  },
+  {
+    image: hero4,
+    title: "Life's too short for the ordinary jewelry",
+    subtitle: "Shop now and let your jewelry do the talking",
+    cta: "SHOP NOW",
   },
 ];
 
