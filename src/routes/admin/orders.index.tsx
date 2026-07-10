@@ -12,16 +12,19 @@ export const Route = createFileRoute("/admin/orders/")({
   component: AdminOrdersIndex,
 });
 
-const statusBadgeStyles: Record<OrderStatus, string> = {
+const statusBadgeStyles: Record<string, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-500/10 dark:text-amber-500 dark:border-amber-500/20",
   confirmed: "bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-500/10 dark:text-blue-500 dark:border-blue-500/20",
   shipped: "bg-indigo-50 text-indigo-700 border-indigo-200/60 dark:bg-indigo-500/10 dark:text-indigo-500 dark:border-indigo-500/20",
   delivered: "bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-500/10 dark:text-emerald-500 dark:border-emerald-500/20",
   cancelled: "bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-500/10 dark:text-rose-500 dark:border-rose-500/20",
+  inventory_conflict: "bg-red-50 text-red-700 border-red-200/60 dark:bg-red-500/10 dark:text-red-500 dark:border-red-500/20 font-semibold animate-pulse",
+  failed: "bg-gray-50 text-gray-700 border-gray-200/60 dark:bg-gray-500/10 dark:text-gray-500 dark:border-gray-500/20",
 };
 
 function AdminOrdersIndex() {
   const [orders, setOrders] = useState<DbOrder[]>([]);
+  const [drafts, setDrafts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -29,13 +32,22 @@ function AdminOrdersIndex() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: ordersData, error: ordersErr } = await supabase
         .from("orders")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setOrders(data || []);
+      if (ordersErr) throw ordersErr;
+      setOrders(ordersData || []);
+
+      const { data: draftsData, error: draftsErr } = await supabase
+        .from("order_drafts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!draftsErr && draftsData) {
+        setDrafts(draftsData);
+      }
     } catch (err: any) {
       console.error("Error loading orders:", err);
       toast.error("Failed to load orders");
@@ -49,7 +61,68 @@ function AdminOrdersIndex() {
   }, []);
 
   const filteredOrders = useMemo(() => {
-    let result = orders;
+    if (statusFilter === "inventory_conflict") {
+      let result = drafts
+        .filter((d) => d.status === "inventory_conflict")
+        .map((d) => ({
+          id: d.id,
+          order_number: `DRAFT: ${d.razorpay_order_id.slice(-8).toUpperCase()}`,
+          customer_name: d.customer_name,
+          customer_email: d.customer_email,
+          created_at: d.created_at,
+          status: "inventory_conflict",
+          total_amount: Number(d.total_amount),
+          isDraft: true,
+        }));
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        result = result.filter(
+          (o) =>
+            o.order_number.toLowerCase().includes(q) ||
+            o.customer_name.toLowerCase().includes(q) ||
+            o.customer_email.toLowerCase().includes(q)
+        );
+      }
+      return result;
+    }
+
+    if (statusFilter === "drafts") {
+      let result = drafts
+        .filter((d) => d.status === "pending" || d.status === "failed")
+        .map((d) => ({
+          id: d.id,
+          order_number: `DRAFT: ${d.razorpay_order_id.slice(-8).toUpperCase()}`,
+          customer_name: d.customer_name,
+          customer_email: d.customer_email,
+          created_at: d.created_at,
+          status: d.status === "failed" ? "failed" : "pending",
+          total_amount: Number(d.total_amount),
+          isDraft: true,
+        }));
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        result = result.filter(
+          (o) =>
+            o.order_number.toLowerCase().includes(q) ||
+            o.customer_name.toLowerCase().includes(q) ||
+            o.customer_email.toLowerCase().includes(q)
+        );
+      }
+      return result;
+    }
+
+    let result = orders.map((o) => ({
+      id: o.id,
+      order_number: o.order_number,
+      customer_name: o.customer_name,
+      customer_email: o.customer_email,
+      created_at: o.created_at,
+      status: o.status,
+      total_amount: Number(o.total_amount),
+      isDraft: false,
+    }));
 
     if (statusFilter !== "all") {
       result = result.filter((o) => o.status === statusFilter);
@@ -66,7 +139,7 @@ function AdminOrdersIndex() {
     }
 
     return result;
-  }, [orders, statusFilter, searchQuery]);
+  }, [orders, drafts, statusFilter, searchQuery]);
 
   const counts = useMemo(() => {
     return {
@@ -76,8 +149,10 @@ function AdminOrdersIndex() {
       shipped: orders.filter((o) => o.status === "shipped").length,
       delivered: orders.filter((o) => o.status === "delivered").length,
       cancelled: orders.filter((o) => o.status === "cancelled").length,
+      conflicts: drafts.filter((d) => d.status === "inventory_conflict").length,
+      drafts: drafts.filter((d) => d.status === "pending" || d.status === "failed").length,
     };
-  }, [orders]);
+  }, [orders, drafts]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-IN", {
@@ -152,6 +227,8 @@ function AdminOrdersIndex() {
             { key: "shipped", label: `Shipped (${counts.shipped})` },
             { key: "delivered", label: `Delivered (${counts.delivered})` },
             { key: "cancelled", label: `Cancelled (${counts.cancelled})` },
+            { key: "inventory_conflict", label: `Conflicts (${counts.conflicts})` },
+            { key: "drafts", label: `Drafts (${counts.drafts})` },
           ].map((f) => (
             <button
               key={f.key}

@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useStore, cartLineProduct } from "@/lib/store";
 import { formatPrice } from "@/data/products";
 import { CreditCard, ShoppingBag, ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 // Zod Validation Schema
@@ -22,7 +21,7 @@ const checkoutSchema = z.object({
   city: z.string().min(2, "City must be at least 2 characters"),
   state: z.string().min(2, "State must be at least 2 characters"),
   zip: z.string().regex(/^\d{6}$/, "ZIP code must be a 6-digit number"),
-  billingSameAsShipping: z.boolean().default(true),
+  billingSameAsShipping: z.boolean(),
   billingStreet: z.string().optional(),
   billingCity: z.string().optional(),
   billingState: z.string().optional(),
@@ -78,8 +77,25 @@ function CheckoutPage() {
   const { products, cart, cartSubtotal, clearCart } = useStore();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [razorpayScriptLoaded, setRazorpayScriptLoaded] = useState(false);
 
   const total = cartSubtotal > 0 ? cartSubtotal + 99 : 0; // Fixed shipping rate of 99
+
+  // Load Razorpay Standard Checkout SDK
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => setRazorpayScriptLoaded(true);
+    script.onerror = () => {
+      console.error("Failed to load Razorpay SDK");
+      toast.error("Failed to load the payment gateway. Please reload the page.");
+    };
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const {
     register,
@@ -128,86 +144,159 @@ function CheckoutPage() {
       return;
     }
 
+    if (!razorpayScriptLoaded || typeof (window as any).Razorpay === "undefined") {
+      toast.error("Payment gateway is still loading. Please wait a moment.");
+      return;
+    }
+
     try {
-      const p_cart_items = cart.map((item) => ({
-        variant_id: item.id,
-        quantity: item.quantity,
-      }));
-
-      const p_shipping_address = {
-        street: formData.street,
-        city: formData.city,
-        state: formData.state,
-        zip: formData.zip,
-      };
-
-      const p_billing_address = formData.billingSameAsShipping
-        ? null
-        : {
-            street: formData.billingStreet,
-            city: formData.billingCity,
-            state: formData.billingState,
-            zip: formData.billingZip,
-          };
-
-      // Call transactional place_order RPC in Supabase
-      const { data, error } = await supabase.rpc("place_order", {
-        p_user_id: user?.id || null,
-        p_customer_name: formData.name,
-        p_customer_email: formData.email,
-        p_customer_phone: formData.phone,
-        p_shipping_address,
-        p_billing_address,
-        p_notes: formData.notes || null,
-        p_cart_items,
+      // 1. Create Payment Order inside Razorpay and insert order_drafts table
+      const orderRes = await fetch("/api/create-payment-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cartItems: cart.map((item) => ({
+            variant_id: item.id,
+            quantity: item.quantity,
+          })),
+          customerName: formData.name,
+          customerEmail: formData.email,
+          customerPhone: formData.phone,
+          shippingAddress: {
+            street: formData.street,
+            city: formData.city,
+            state: formData.state,
+            zip: formData.zip,
+          },
+          billingAddress: formData.billingSameAsShipping
+            ? null
+            : {
+                street: formData.billingStreet,
+                city: formData.billingCity,
+                state: formData.billingState,
+                zip: formData.billingZip,
+              },
+          notes: formData.notes || null,
+          userId: user?.id || null,
+        }),
       });
 
-      if (error) {
-        // Intercept out of stock or custom exception messages
-        if (error.message && error.message.toLowerCase().includes("stock")) {
-          toast.error(error.message, { duration: 6000 });
-        } else {
-          toast.error(error.message || "Failed to place order. Please try again.");
-        }
+      if (!orderRes.ok) {
+        const errData = await orderRes.json();
+        toast.error(errData.error || "Failed to initiate payment. Check item stock counts.");
         return;
       }
 
-      // Success: Save order details in session storage for guest validation
-      const lastOrderDetails = {
-        orderNumber: data.order_number,
-        customerName: formData.name,
-        customerEmail: formData.email,
-        customerPhone: formData.phone || undefined,
-        shippingAddress: p_shipping_address,
-        subtotal: cartSubtotal,
-        shippingCost: 99,
-        totalAmount: total,
-        items: cart.map((line) => {
-          const p = cartLineProduct(line, products);
-          return {
-            name: p?.name || "Unknown Product",
-            qty: line.quantity,
-            price: p?.price || 0,
-            image: p?.image || "/src/assets/showroom.jpg",
-          };
-        }),
+      const { razorpay_order_id, amount, currency, key_id } = await orderRes.json();
+
+      // 2. Configure Razorpay Standard Checkout popup options
+      const options = {
+        key: key_id,
+        amount: amount,
+        currency: currency,
+        name: "Aryansh Gold",
+        description: "Secure Jewellery Checkout",
+        image: "/src/assets/aryansh-logo-mark.png",
+        order_id: razorpay_order_id,
+        handler: async function (response: any) {
+          const toastId = toast.loading("Verifying payment transaction...");
+
+          try {
+            // 3. Verify Payment Signature and finalize order
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok) {
+              toast.dismiss(toastId);
+              toast.error(verifyData.error || "Signature verification failed. Please contact support.");
+              return;
+            }
+
+            // Handle post-payment stock collision / conflict state
+            if (verifyData.status === "inventory_conflict") {
+              toast.dismiss(toastId);
+              toast.error(verifyData.message, { duration: 10000 });
+              navigate({ to: "/cart" }); // Redirect to cart
+              return;
+            }
+
+            // Success Order Creation State
+            const lastOrderDetails = {
+              orderNumber: verifyData.order_number,
+              customerName: formData.name,
+              customerEmail: formData.email,
+              customerPhone: formData.phone || undefined,
+              shippingAddress: {
+                street: formData.street,
+                city: formData.city,
+                state: formData.state,
+                zip: formData.zip,
+              },
+              subtotal: cartSubtotal,
+              shippingCost: 99,
+              totalAmount: total,
+              items: cart.map((line) => {
+                const p = cartLineProduct(line, products);
+                return {
+                  name: p?.name || "Unknown Product",
+                  qty: line.quantity,
+                  price: p?.price || 0,
+                  image: p?.image || "/src/assets/showroom.jpg",
+                };
+              }),
+            };
+
+            sessionStorage.setItem("aryansh_last_order", JSON.stringify(lastOrderDetails));
+
+            // Clear cart
+            await clearCart();
+            
+            toast.dismiss(toastId);
+            toast.success("Payment authorized and order created successfully!");
+
+            // Redirect to success page
+            navigate({
+              to: "/order-confirmation",
+              search: { orderNumber: verifyData.order_number },
+            });
+
+          } catch (verifyErr) {
+            console.error("Payment verification failure:", verifyErr);
+            toast.dismiss(toastId);
+            toast.error("Network connection failed during verification. Please contact support.");
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#bfa054", // gold primary
+        },
+        modal: {
+          ondismiss: function () {
+            toast.warning("Payment checkout cancelled.");
+          },
+        },
       };
 
-      sessionStorage.setItem("aryansh_last_order", JSON.stringify(lastOrderDetails));
+      // Open Razorpay Standard Checkout SDK popup
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
 
-      // Clear cart locally and in database
-      await clearCart();
-
-      toast.success("Order placed successfully!");
-
-      // Redirect to confirmation page
-      navigate({
-        to: "/order-confirmation",
-        search: { orderNumber: data.order_number },
-      });
     } catch (err: any) {
-      console.error("Checkout submission error:", err);
-      toast.error("An unexpected error occurred. Please try again.");
+      console.error("Checkout initiation error:", err);
+      toast.error("Failed to initialize checkout. Please try again.");
     }
   };
 
@@ -301,7 +390,7 @@ function CheckoutPage() {
                     placeholder="e.g. Apartment, suite, unit, building, street"
                     {...register("street")}
                     className={`mt-1 border-border ${errors.street ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                  />
+                    />
                   {errors.street && (
                     <p className="mt-1 text-xs text-destructive">{errors.street.message}</p>
                   )}
@@ -467,16 +556,16 @@ function CheckoutPage() {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !razorpayScriptLoaded}
                   className="w-full py-4 text-xs font-bold uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="animate-spin" size={16} />
-                      Placing Order...
+                      Initiating Payment...
                     </>
                   ) : (
-                    "Place Order"
+                    "Pay Securely via Razorpay"
                   )}
                 </Button>
               </div>
@@ -484,7 +573,7 @@ function CheckoutPage() {
 
             <div className="flex items-center gap-2.5 p-4 bg-background border border-border/80 text-[10px] text-muted-foreground rounded-sm shadow-sm">
               <ShieldCheck className="text-primary shrink-0" size={16} />
-              <p>Your connection is secure. We use automated transaction systems with secure real-time stock allocation.</p>
+              <p>Payments are processed securely via Razorpay. Your order is initialized only upon successful signature verification.</p>
             </div>
           </div>
         </form>

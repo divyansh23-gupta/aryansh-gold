@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Play } from "lucide-react";
-import videoPoster from "@/assets/video-poster.jpg";
+import videoPoster from "@/assets/brand-story-poster.png";
 
 export function BrandStoryVideo() {
   const imgRef = useRef<HTMLImageElement | null>(null);

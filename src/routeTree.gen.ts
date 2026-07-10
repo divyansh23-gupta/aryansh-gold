@@ -27,6 +27,8 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as ApiVerifyPaymentRouteImport } from './routes/api.verify-payment'
+import { Route as ApiCreatePaymentOrderRouteImport } from './routes/api.create-payment-order'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminUnauthorizedRouteImport } from './routes/admin/unauthorized'
 import { Route as AdminReelsRouteImport } from './routes/admin/reels'
@@ -129,6 +131,16 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVerifyPaymentRoute = ApiVerifyPaymentRouteImport.update({
+  id: '/api/verify-payment',
+  path: '/api/verify-payment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCreatePaymentOrderRoute = ApiCreatePaymentOrderRouteImport.update({
+  id: '/api/create-payment-order',
+  path: '/api/create-payment-order',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -208,6 +220,8 @@ export interface FileRoutesByFullPath {
   '/admin/reels': typeof AdminReelsRoute
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/create-payment-order': typeof ApiCreatePaymentOrderRoute
+  '/api/verify-payment': typeof ApiVerifyPaymentRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/orders/$id': typeof AdminOrdersIdRoute
@@ -238,6 +252,8 @@ export interface FileRoutesByTo {
   '/admin/reels': typeof AdminReelsRoute
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/create-payment-order': typeof ApiCreatePaymentOrderRoute
+  '/api/verify-payment': typeof ApiVerifyPaymentRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/orders/$id': typeof AdminOrdersIdRoute
@@ -270,6 +286,8 @@ export interface FileRoutesById {
   '/admin/reels': typeof AdminReelsRoute
   '/admin/unauthorized': typeof AdminUnauthorizedRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/create-payment-order': typeof ApiCreatePaymentOrderRoute
+  '/api/verify-payment': typeof ApiVerifyPaymentRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/orders/$id': typeof AdminOrdersIdRoute
@@ -303,6 +321,8 @@ export interface FileRouteTypes {
     | '/admin/reels'
     | '/admin/unauthorized'
     | '/admin/users'
+    | '/api/create-payment-order'
+    | '/api/verify-payment'
     | '/product/$slug'
     | '/admin/'
     | '/admin/orders/$id'
@@ -333,6 +353,8 @@ export interface FileRouteTypes {
     | '/admin/reels'
     | '/admin/unauthorized'
     | '/admin/users'
+    | '/api/create-payment-order'
+    | '/api/verify-payment'
     | '/product/$slug'
     | '/admin'
     | '/admin/orders/$id'
@@ -364,6 +386,8 @@ export interface FileRouteTypes {
     | '/admin/reels'
     | '/admin/unauthorized'
     | '/admin/users'
+    | '/api/create-payment-order'
+    | '/api/verify-payment'
     | '/product/$slug'
     | '/admin/'
     | '/admin/orders/$id'
@@ -390,6 +414,8 @@ export interface RootRouteChildren {
   ShopRoute: typeof ShopRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   WishlistRoute: typeof WishlistRoute
+  ApiCreatePaymentOrderRoute: typeof ApiCreatePaymentOrderRoute
+  ApiVerifyPaymentRoute: typeof ApiVerifyPaymentRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
 
@@ -521,6 +547,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/verify-payment': {
+      id: '/api/verify-payment'
+      path: '/api/verify-payment'
+      fullPath: '/api/verify-payment'
+      preLoaderRoute: typeof ApiVerifyPaymentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/create-payment-order': {
+      id: '/api/create-payment-order'
+      path: '/api/create-payment-order'
+      fullPath: '/api/create-payment-order'
+      preLoaderRoute: typeof ApiCreatePaymentOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -650,6 +690,8 @@ const rootRouteChildren: RootRouteChildren = {
   ShopRoute: ShopRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   WishlistRoute: WishlistRoute,
+  ApiCreatePaymentOrderRoute: ApiCreatePaymentOrderRoute,
+  ApiVerifyPaymentRoute: ApiVerifyPaymentRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport
