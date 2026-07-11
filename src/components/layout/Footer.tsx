@@ -41,11 +41,17 @@ export function Footer() {
               Timeless designs, boutique finish, and effortless elegance.
             </p>
             <div className="mt-6 flex gap-4">
-              {[Instagram, Facebook, Twitter, Youtube].map((Icon, i) => (
+              {[
+                { Icon: Instagram, href: "https://www.instagram.com/aryansh_gold/" },
+                { Icon: Facebook, href: "https://www.facebook.com/people/Aryanshgoldberasia/61560901703710/?ref=PROFILE_EDIT_xav_ig_profile_page_web" },
+                { Icon: Twitter, href: "#" },
+                { Icon: Youtube, href: "#" }
+              ].map(({ Icon, href }, i) => (
                 <a
                   key={i}
-                  href="#"
+                  href={href}
                   aria-label="Social link"
+                  {...(href !== "#" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   className="text-background/70 transition-colors hover:text-primary"
                 >
                   <Icon size={18} strokeWidth={1.5} />
