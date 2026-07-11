@@ -241,7 +241,9 @@ function OrderConfirmationPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping Cost</span>
-                  <span className="text-foreground">{formatPrice(order.shippingCost)}</span>
+                  <span className="text-foreground">
+                    {order.shippingCost === 0 ? "Free" : formatPrice(order.shippingCost)}
+                  </span>
                 </div>
                 <div className="flex justify-between border-t border-border pt-3 text-sm font-serif font-semibold">
                   <span className="text-foreground">Total Paid</span>

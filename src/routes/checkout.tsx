@@ -81,7 +81,7 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const [razorpayScriptLoaded, setRazorpayScriptLoaded] = useState(false);
 
-  const total = cartSubtotal > 0 ? cartSubtotal + 99 : 0; // Fixed shipping rate of 99
+  const total = cartSubtotal;
 
   // Load Razorpay Standard Checkout SDK
   useEffect(() => {
@@ -249,7 +249,7 @@ function CheckoutPage() {
                 zip: formData.zip,
               },
               subtotal: cartSubtotal,
-              shippingCost: 99,
+              shippingCost: 0,
               totalAmount: total,
               items: cart.map((line) => {
                 const p = cartLineProduct(line, products);
@@ -552,7 +552,7 @@ function CheckoutPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping Cost</span>
-                  <span className="text-foreground">{formatPrice(99)}</span>
+                  <span className="text-foreground">Free</span>
                 </div>
                 <div className="flex justify-between border-t border-border pt-3 text-sm font-serif font-semibold">
                   <span className="text-foreground">Total to Pay</span>

@@ -67,8 +67,8 @@ export const Route = createFileRoute("/api/create-payment-order")({
             subtotal += Number(dbVar.price) * item.quantity;
           }
 
-          const shippingCost = 99;
-          const totalAmount = subtotal + shippingCost;
+          const shippingCost = 0;
+          const totalAmount = subtotal;
           const amountInPaise = Math.round(totalAmount * 100);
 
           // 2. Call Razorpay API to generate order

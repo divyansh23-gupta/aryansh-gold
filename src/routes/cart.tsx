@@ -37,9 +37,8 @@ function CartPage() {
   };
 
   const discount = applied ? Math.round(cartSubtotal * applied.rate) : 0;
-  const shipping =
-    cartSubtotal === 0 || cartSubtotal - discount >= FREE_SHIPPING_THRESHOLD ? 0 : 99;
-  const total = cartSubtotal - discount + shipping;
+  const shipping = 0;
+  const total = cartSubtotal - discount;
 
   if (cart.length === 0) {
     return (
@@ -210,12 +209,7 @@ function CartPage() {
                   label="Estimated Shipping"
                   value={shipping === 0 ? "Free" : formatPrice(shipping)}
                 />
-                {shipping > 0 && (
-                  <p className="text-[0.68rem] text-muted-foreground">
-                    Add {formatPrice(FREE_SHIPPING_THRESHOLD - (cartSubtotal - discount))} more
-                    for complimentary shipping.
-                  </p>
-                )}
+
               </div>
 
               <div className="mt-6 flex items-center justify-between border-t border-border pt-6">

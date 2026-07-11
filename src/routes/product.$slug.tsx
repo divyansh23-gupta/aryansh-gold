@@ -336,7 +336,7 @@ function ProductPage() {
                   Shipping Information
                 </AccordionTrigger>
                 <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
-                  Complimentary shipping on orders above ₹2,999. Orders are dispatched
+                  Complimentary shipping on all orders. Orders are dispatched
                   within 24–48 hours and typically arrive in 3–6 business days.
                 </AccordionContent>
               </AccordionItem>
